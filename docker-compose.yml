@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  imagehost:
+    container_name: imagehost
+    image: imagehost
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=Etc/UTC
+    ports:
+        - 1111:80
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - db
+    restart: always
+  db:
+    container_name: postgres-imagehost
+    image: postgres-imagehost
+    restart: always
+    ports:
+        - 5433:5432
+    environment:
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: imagehost

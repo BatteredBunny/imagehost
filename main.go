@@ -98,14 +98,7 @@ func middleware(h http.Handler) http.Handler {
 
 				fileRaw.Close()
 
-				var scheme string
-				if r.TLS == nil {
-					scheme = "http://"
-				} else {
-					scheme = "https://"
-				}
-
-				fmt.Fprintln(w, scheme+r.Host+"/"+full_file_name)
+				fmt.Fprintln(w, "https://"+r.Host+"/"+full_file_name)
 				return
 			} else {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

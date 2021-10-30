@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	_ "github.com/lib/pq"
 
@@ -18,6 +19,14 @@ func auto_deletion() {
 		db, err := sql.Open("postgres", CONNECTION_STRING)
 		if err != nil { // This error occurs when it can't connect to database
 			return
+		}
+
+		rows, _ := db.Query("select file_name from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
+		for rows.Next() {
+			var file_name string
+			rows.Scan(&file_name)
+
+			os.Remove("/app/data/" + file_name)
 		}
 
 		db.Query("delete from public.images WHERE created_date < NOW() - INTERVAL '7 days'")

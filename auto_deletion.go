@@ -16,12 +16,16 @@ func auto_deletion() {
 	c.AddFunc("@hourly", func() {
 		fmt.Println("Starting hourly cron job")
 
-		db, err := sql.Open("postgres", CONNECTION_STRING)
+		db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
 		if err != nil { // This error occurs when it can't connect to database
 			return
 		}
 
-		rows, _ := db.Query("select file_name from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
+		rows, err := db.Query("select file_name from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
+		if err != nil { // Im guessing this happens when it gets no results
+			return
+		}
+
 		for rows.Next() {
 			var file_name string
 			rows.Scan(&file_name)

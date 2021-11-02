@@ -9,19 +9,21 @@ services:
       - PGID=1000
       - UMASK=002
       - TZ=Etc/UTC
+      - POSTGRES_CONN=host=db port=5432 user=postgres password=123 dbname=imagehost sslmode=disable
     ports:
         - 1111:80
     volumes:
-      - ./data:/app/data
+      - /run/media/lain/data/server_configs/imagehost/cdn:/app/data
     depends_on:
       - db
-    restart: always
+    restart: unless-stopped
   db:
     container_name: postgres-imagehost
     image: postgres-imagehost
-    restart: always
     ports:
         - 5433:5432
     environment:
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: imagehost
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=imagehost
+    restart: unless-stopped

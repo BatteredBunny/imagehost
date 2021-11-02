@@ -19,9 +19,8 @@ import (
 )
 
 const DATA_FOLDER = "/app/data/"
-const MAX_UPLOAD_SIZE = 1024 * 1024 * 100 // 100MB
-const CONNECTION_STRING = "host=db port=5432 user=postgres password=123 dbname=imagehost sslmode=disable"
 const FILE_NAME_LENGTH = 10
+const MAX_UPLOAD_SIZE = 1024 * 1024 * 100
 
 func main() {
 	go auto_deletion()
@@ -50,7 +49,7 @@ func middleware(h http.Handler) http.Handler {
 
 			upload_token := r.FormValue("token")
 
-			db, err := sql.Open("postgres", CONNECTION_STRING)
+			db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
 			if err != nil { // This error occurs when it can't connect to database
 				http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 				return

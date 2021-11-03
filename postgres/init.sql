@@ -3,6 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE public.images (
 	file_name varchar NOT NULL,
 	created_date timestamptz NOT NULL DEFAULT now(),
+	file_owner int4 NOT NULL,
 	CONSTRAINT images_un UNIQUE (file_name)
 );
 

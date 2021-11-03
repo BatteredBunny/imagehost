@@ -1,9 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"mime"
@@ -26,6 +26,10 @@ func main() {
 	go auto_deletion()
 
 	r := mux.NewRouter()
+	r.PathPrefix("/favicon.ico").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "/app/public/favicon.ico")
+	})
+
 	r.PathPrefix("/").Handler(http.StripPrefix("/", middleware(http.FileServer(http.Dir(DATA_FOLDER)))))
 
 	fmt.Println("Starting server")
@@ -35,76 +39,17 @@ func main() {
 func middleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			r.ParseMultipartForm(MAX_UPLOAD_SIZE)
-
-			if r.ContentLength > MAX_UPLOAD_SIZE {
-				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
-				return
-			}
-
-			if !r.Form.Has("token") {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				return
-			}
-
-			upload_token := r.FormValue("token")
-
-			db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
-			if err != nil { // This error occurs when it can't connect to database
-				http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-				return
-			}
-
-			var result sql.NullString
-			err = db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&result)
-			if err != nil { // This error occurs when the token is incorrect
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-				return
-			}
-
-			if result.Valid {
-				fileRaw, fileHeader, err := r.FormFile("file")
-				if err != nil { // This error occurs when user doesn't send anything on file
-					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-					return
-				}
-
-				data, err := io.ReadAll(fileRaw)
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-					return
-				}
-
-				extension, err := get_extension(fileHeader)
-				if err != nil { // Wrong file type
-					http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-					return
-				}
-
-				full_file_name := generate_file_name() + extension
-
-				err = os.WriteFile(DATA_FOLDER+full_file_name, data, 0644)
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-					return
-				}
-
-				_, err = db.Query(`INSERT INTO public.images VALUES ($1)`, full_file_name)
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-					return
-				}
-
-				fileRaw.Close()
-
-				fmt.Fprintln(w, "https://"+r.Host+"/"+full_file_name)
-				return
-			} else {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-				return
-			}
+			api(w, r)
+			return
 		} else if r.URL.Path == "" {
-			http.ServeFile(w, r, "/app/public/index.html")
+			tmpl, err := template.New("index.html").ParseFiles("/app/template/index.html")
+
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+
+			tmpl.Execute(w, r.Host)
 			return
 		}
 
@@ -130,9 +75,9 @@ func get_extension(fileHeader *multipart.FileHeader) (string, error) {
 	}
 
 	mimetype := http.DetectContentType(header)
-	if mimetype != "image/png" && mimetype != "image/jpeg" && mimetype != "image/webp" {
-		return "", errors.New("wrong mimetype")
-	}
+	// if mimetype != "image/png" && mimetype != "image/jpeg" && mimetype != "image/webp" {
+	// 	return "", errors.New("wrong mimetype")
+	// }
 
 	headerRaw.Close()
 

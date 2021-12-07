@@ -92,6 +92,7 @@ func upload_api(w http.ResponseWriter, r *http.Request) {
 	fileRaw, fileHeader, err := r.FormFile("file")
 	if err != nil { // This error occurs when user doesn't send anything on file
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		fmt.Println("no file")
 		return
 	}
 
@@ -103,7 +104,7 @@ func upload_api(w http.ResponseWriter, r *http.Request) {
 
 	extension, err := get_extension(fileHeader)
 	if err != nil { // Wrong file type
-		http.Error(w, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -123,5 +124,6 @@ func upload_api(w http.ResponseWriter, r *http.Request) {
 
 	fileRaw.Close()
 
+	http.Redirect(w, r, "https://"+r.Host+"/"+full_file_name, http.StatusFound)
 	fmt.Fprintln(w, "https://"+r.Host+"/"+full_file_name)
 }

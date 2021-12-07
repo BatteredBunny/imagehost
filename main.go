@@ -1,12 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
-	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -75,18 +73,27 @@ func get_extension(fileHeader *multipart.FileHeader) (string, error) {
 	}
 
 	mimetype := http.DetectContentType(header)
-	// if mimetype != "image/png" && mimetype != "image/jpeg" && mimetype != "image/webp" {
-	// 	return "", errors.New("wrong mimetype")
-	// }
 
 	headerRaw.Close()
 
-	extensions, err := mime.ExtensionsByType(mimetype)
-	if err != nil || len(extensions) == 0 {
-		return "", errors.New("no extension found")
+	switch mimetype {
+	case "image/jpeg":
+		return ".jpg", nil
+	case "image/png":
+		return ".png", nil
+	case "image/gif":
+		return ".gif", nil
+	case "image/webp":
+		return ".webp", nil
+	case "video/mp4":
+		return ".mp4", nil
+	case "video/webm":
+		return ".webm", nil
+	case "application/ogg":
+		return ".ogg", nil
+	default:
+		return "", fmt.Errorf("Unsupported file type: %s", mimetype)
 	}
-
-	return extensions[len(extensions)-1], nil
 }
 
 func generate_file_name() string {

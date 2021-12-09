@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func api(w http.ResponseWriter, r *http.Request) {
+func api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	r.ParseMultipartForm(MAX_UPLOAD_SIZE)
 
 	if r.ContentLength > MAX_UPLOAD_SIZE {
@@ -23,25 +23,19 @@ func api(w http.ResponseWriter, r *http.Request) {
 
 	switch r.FormValue("type") {
 	case "upload":
-		upload_api(w, r)
+		upload_api(w, r, db)
 	case "delete":
-		delete_image_api(w, r)
+		delete_image_api(w, r, db)
 	}
 
 }
 
-func delete_image_api(w http.ResponseWriter, r *http.Request) {
+func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	upload_token := r.FormValue("token")
 	file_name := r.FormValue("file_name")
 
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
-	if err != nil { // This error occurs when it can't connect to database
-		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-		return
-	}
-
 	var token_result sql.NullString
-	err = db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&token_result)
+	err := db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&token_result)
 	if err != nil { // This error occurs when the token is incorrect
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
@@ -68,17 +62,11 @@ func delete_image_api(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Successfully deleted image")
 }
 
-func upload_api(w http.ResponseWriter, r *http.Request) {
+func upload_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	upload_token := r.FormValue("token")
 
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
-	if err != nil { // This error occurs when it can't connect to database
-		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-		return
-	}
-
 	var result sql.NullString
-	err = db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&result)
+	err := db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&result)
 	if err != nil { // This error occurs when the token is incorrect
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return

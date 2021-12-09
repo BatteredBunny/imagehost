@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"io"
@@ -21,6 +22,16 @@ const FILE_NAME_LENGTH = 10
 const MAX_UPLOAD_SIZE = 1024 * 1024 * 100
 
 func main() {
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`)
+	db.Exec("CREATE TABLE IF NOT EXISTS public.images (file_name varchar NOT NULL, created_date timestamptz NOT NULL DEFAULT now(), file_owner int4 NOT NULL, CONSTRAINT images_un UNIQUE (file_name));")
+	db.Exec("CREATE TABLE IF NOT EXISTS  public.accounts (upload_token uuid NOT NULL DEFAULT uuid_generate_v4(), id serial4 NOT NULL, CONSTRAINT accounts_pk PRIMARY KEY (id), CONSTRAINT accounts_un UNIQUE (upload_token));")
+
 	go auto_deletion()
 
 	r := mux.NewRouter()
@@ -28,16 +39,16 @@ func main() {
 		http.ServeFile(w, r, "/app/public/favicon.ico")
 	})
 
-	r.PathPrefix("/").Handler(http.StripPrefix("/", middleware(http.FileServer(http.Dir(DATA_FOLDER)))))
+	r.PathPrefix("/").Handler(http.StripPrefix("/", middleware(http.FileServer(http.Dir(DATA_FOLDER)), db)))
 
 	fmt.Println("Starting server")
 	log.Fatal(http.ListenAndServe(":80", r))
 }
 
-func middleware(h http.Handler) http.Handler {
+func middleware(h http.Handler, db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			api(w, r)
+			api(w, r, db)
 			return
 		} else if r.URL.Path == "" {
 			tmpl, err := template.New("index.html").ParseFiles("/app/template/index.html")

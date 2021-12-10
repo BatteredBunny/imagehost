@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +12,8 @@ import (
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/mux"
+	"github.com/h2non/filetype"
 	_ "github.com/lib/pq"
-
-	"mime/multipart"
 )
 
 const DATA_FOLDER = "/app/data/"
@@ -87,39 +85,17 @@ func middleware(h http.Handler, db *sql.DB) http.Handler {
 	})
 }
 
-func get_extension(fileHeader *multipart.FileHeader) (string, error) {
-	headerRaw, err := fileHeader.Open()
+func get_extension(file []byte) (string, error) {
+	if filetype.IsApplication(file) {
+		return "", fmt.Errorf("Unsupported file type")
+	}
+
+	extension, err := filetype.Get(file)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("Could not get file extension")
 	}
 
-	header, err := io.ReadAll(headerRaw)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	mimetype := http.DetectContentType(header)
-
-	headerRaw.Close()
-
-	switch mimetype {
-	case "image/jpeg":
-		return ".jpg", nil
-	case "image/png":
-		return ".png", nil
-	case "image/gif":
-		return ".gif", nil
-	case "image/webp":
-		return ".webp", nil
-	case "video/mp4":
-		return ".mp4", nil
-	case "video/webm":
-		return ".webm", nil
-	case "application/ogg":
-		return ".ogg", nil
-	default:
-		return "", fmt.Errorf("Unsupported file type: %s", mimetype)
-	}
+	return "." + extension.Extension, nil
 }
 
 func generate_file_name() string {

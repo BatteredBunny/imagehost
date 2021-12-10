@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS public.images (
 );
 
 CREATE TABLE IF NOT EXISTS  public.accounts (
+	token uuid NOT NULL DEFAULT uuid_generate_v4(),
 	upload_token uuid NOT NULL DEFAULT uuid_generate_v4(),
 	id serial4 NOT NULL,
+	account_type text NOT NULL DEFAULT 'USER',
 	CONSTRAINT accounts_pk PRIMARY KEY (id),
-	CONSTRAINT accounts_un UNIQUE (upload_token)
+	CONSTRAINT accounts_un UNIQUE (token)
 );

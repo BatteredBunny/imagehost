@@ -10,16 +10,11 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-func auto_deletion() {
+func auto_deletion(db *sql.DB) {
 	c := cron.New()
 
 	c.AddFunc("@hourly", func() {
 		fmt.Println("Starting hourly cron job")
-
-		db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN"))
-		if err != nil { // This error occurs when it can't connect to database
-			return
-		}
 
 		rows, err := db.Query("select file_name from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
 		if err != nil { // Im guessing this happens when it gets no results
@@ -33,9 +28,7 @@ func auto_deletion() {
 			os.Remove("/app/data/" + file_name)
 		}
 
-		db.Query("delete from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
-
-		db.Close()
+		db.Exec("delete from public.images WHERE created_date < NOW() - INTERVAL '7 days'")
 	})
 
 	fmt.Println("Starting auto deletion server")

@@ -86,19 +86,15 @@ func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	rows, err := db.Query("SELECT file_name FROM public.images WHERE file_name=$1 and file_owner=$2;", file_name, token_result.String)
-	if err != nil { // Im guessing this happens when it gets no results
+	row := db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1 and file_owner=$2;", file_name, token_result.String)
+	if row.Scan() == sql.ErrNoRows {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	for rows.Next() {
-		var file_name string
-		rows.Scan(&file_name)
+	os.Remove("/app/data/" + file_name)
 
-		os.Remove("/app/data/" + file_name)
-	}
-
+	db.Exec("delete from public.images WHERE file_name=$1 and file_owner=$2", file_name, token_result.String)
 	fmt.Fprintln(w, "Successfully deleted image")
 }
 
@@ -120,7 +116,7 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	fileRaw, fileHeader, err := r.FormFile("file")
+	fileRaw, _, err := r.FormFile("file")
 	if err != nil { // This error occurs when user doesn't send anything on file
 		http.Error(w, "No file provided", http.StatusBadRequest)
 		return
@@ -132,7 +128,7 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	extension, err := get_extension(fileHeader)
+	extension, err := get_extension(file)
 	if err != nil { // Wrong file type
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return

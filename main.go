@@ -12,7 +12,6 @@ import (
 
 	"github.com/dchest/uniuri"
 	"github.com/gorilla/mux"
-	"github.com/h2non/filetype"
 	_ "github.com/lib/pq"
 )
 
@@ -83,19 +82,6 @@ func middleware(h http.Handler, db *sql.DB) http.Handler {
 
 		h.ServeHTTP(w, r)
 	})
-}
-
-func get_extension(file []byte) (string, error) {
-	if filetype.IsApplication(file) {
-		return "", fmt.Errorf("Unsupported file type")
-	}
-
-	extension, err := filetype.Get(file)
-	if err != nil {
-		return "", fmt.Errorf("Could not get file extension")
-	}
-
-	return "." + extension.Extension, nil
 }
 
 func generate_file_name() string {

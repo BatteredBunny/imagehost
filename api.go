@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/h2non/filetype"
 )
 
 func api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -128,13 +130,18 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	extension, err := get_extension(file)
-	if err != nil { // Wrong file type
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+	if filetype.IsApplication(file) {
+		http.Error(w, "Unsupported file type", http.StatusUnsupportedMediaType)
 		return
 	}
 
-	full_file_name := generate_file_name() + extension
+	extension, err := filetype.Get(file)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	full_file_name := generate_file_name() + "." + extension.Extension
 
 	err = os.WriteFile(DATA_FOLDER+full_file_name, file, 0644)
 	if err != nil {

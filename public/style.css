@@ -1,0 +1,27 @@
+body {
+    font-family: 'Comic Sans MS'
+}
+
+.container {
+    padding: 20px;
+}
+
+.neco {
+    margin-top: 10px;
+    float: right;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1e1e1e;
+        color: white
+    }
+    
+    a {
+        color: #359cea;
+    }
+    
+    a:visited {
+        color: orange;
+    }
+}

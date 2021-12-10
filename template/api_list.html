@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/style.css">
+    <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
+    <title>Api list</title>
+    <meta name="description" content="The best file host on all of interwebs">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Api list</h1>
+
+        <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png'     https://{{.}}/<b>api/upload</b></code><br>
+        <code>curl -F 'upload_token=1234567890' -F 'file_name=filename.png' https://{{.}}<b>/api/delete</b></code><br>
+
+        <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/account/new_upload_token</b></code><br>
+        <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/account/delete</b></code><br>
+
+        <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/admin/create_user</b></code><br>
+        <code>curl -F 'token=1234567890'        -F 'id=1'                   https://{{.}}<b>/api/admin/delete_user</b></code><br>
+
+        <img class="neco" src="/public/neco_poison.gif" alt="Neco being poisoned">
+    </div>
+</body>
+
+</html>

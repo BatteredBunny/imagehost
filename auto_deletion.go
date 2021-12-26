@@ -3,15 +3,16 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	_ "github.com/lib/pq"
 
 	"github.com/robfig/cron/v3"
 )
 
-func auto_deletion(db *sql.DB, config Config) {
+func auto_deletion(db *sql.DB, config Config, s3client *s3.S3) {
 	c := cron.New()
 
 	c.AddFunc("@hourly", func() {
@@ -26,10 +27,13 @@ func auto_deletion(db *sql.DB, config Config) {
 			var file_name string
 			rows.Scan(&file_name)
 
-			os.Remove(config.Data_folder + file_name)
+			s3client.DeleteObject(&s3.DeleteObjectInput{
+				Bucket: aws.String(config.S3.Bucket),
+				Key:    aws.String(file_name),
+			})
 		}
 
-		db.Exec("DELET FROM public.images WHERE created_date < NOW() - INTERVAL '7 days'")
+		db.Exec("DELETE FROM public.images WHERE created_date < NOW() - INTERVAL '7 days'")
 	})
 
 	fmt.Printf("%s | Starting auto deletion server\n", time.Now().Format(time.RFC3339))

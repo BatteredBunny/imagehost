@@ -12,6 +12,10 @@ import (
 	"path"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dchest/uniuri"
 	_ "github.com/lib/pq"
 )
@@ -24,13 +28,21 @@ type User struct {
 }
 
 type Config struct {
-	Data_folder                string `json:"data_folder"`
 	Template_folder            string `json:"template_folder"`
 	Static_folder              string `json:"static_folder"`
 	File_name_length           int    `json:"file_name_length"`
 	Max_upload_size            int    `json:"max_upload_size"`
 	Postgres_connection_string string `json:"postgres_connection_string"`
 	Port                       string `json:"port"`
+
+	S3 struct {
+		Access_key_id     string `json:"access_key_id"`
+		Secret_access_key string `json:"secret_access_key"`
+		Bucket            string `json:"bucket"`
+		Region            string `json:"region"`
+		Endpoint          string `json:"endpoint"`
+		CDN_Domain        string `json:"cdn_domain"`
+	}
 }
 
 func main() {
@@ -48,13 +60,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if _, err := os.Stat(config.Data_folder); os.IsNotExist(err) {
-		os.Mkdir(config.Data_folder, 0700)
-	}
-
+	var s3client *s3.S3 = prepeare_s3(config)
 	var db *sql.DB = prepeare_db(config)
 
-	go auto_deletion(db, config)
+	go auto_deletion(db, config, s3client)
 
 	apiListTemplate, err := template.New("api_list.html").ParseFiles(config.Template_folder + "api_list.html")
 	if err != nil {
@@ -79,17 +88,17 @@ func main() {
 
 			switch r.URL.Path {
 			case "/api/upload":
-				upload_image_api(w, r, db, config)
+				upload_image_api(w, r, db, config, s3client)
 			case "/api/delete":
-				delete_image_api(w, r, db, config)
+				delete_image_api(w, r, db, config, s3client)
 			case "/api/account/new_upload_token":
 				new_upload_token_api(w, r, db)
 			case "/api/account/delete":
-				account_delete_api(w, r, db, config)
+				account_delete_api(w, r, db, config, s3client)
 			case "/api/admin/create_user":
 				admin_create_user(w, r, db)
 			case "/api/admin/delete_user":
-				admin_delete_user(w, r, db, config)
+				admin_delete_user(w, r, db, config, s3client)
 			default:
 				http.NotFound(w, r)
 			}
@@ -125,13 +134,22 @@ func middleware(indexTemplate *template.Template, db *sql.DB, config Config) htt
 			return
 		}
 
-		if _, err := os.Open(config.Data_folder + path.Clean(r.URL.Path)); os.IsNotExist(err) {
+		if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1;", path.Base(r.URL.Path)).Scan() == sql.ErrNoRows {
 			http.Redirect(w, r, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", http.StatusFound)
 			return
 		}
 
-		http.ServeFile(w, r, config.Data_folder+path.Clean(r.URL.Path))
+		http.Redirect(w, r, "https://"+config.S3.CDN_Domain+"/file/"+config.S3.Bucket+path.Clean(r.URL.Path), http.StatusFound)
 	})
+}
+
+func prepeare_s3(config Config) *s3.S3 {
+	return s3.New(session.New(&aws.Config{
+		Credentials:      credentials.NewStaticCredentials(config.S3.Access_key_id, config.S3.Secret_access_key, ""),
+		Endpoint:         aws.String(config.S3.Endpoint),
+		Region:           aws.String(config.S3.Region),
+		S3ForcePathStyle: aws.Bool(true),
+	}))
 }
 
 func prepeare_db(config Config) *sql.DB {
@@ -143,6 +161,7 @@ func prepeare_db(config Config) *sql.DB {
 	if _, err := db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`); err != nil {
 		log.Fatal(err)
 	}
+
 	if _, err := db.Exec("CREATE TABLE IF NOT EXISTS public.images (file_name varchar NOT NULL, created_date timestamptz NOT NULL DEFAULT now(), file_owner int4 NOT NULL, CONSTRAINT images_un UNIQUE (file_name));"); err != nil {
 		log.Fatal(err)
 	}

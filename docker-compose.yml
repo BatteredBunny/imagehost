@@ -10,7 +10,7 @@ services:
       - UMASK=002
       - TZ=Etc/UTC
     ports:
-        - 1111:80
+        - 8080:8080
     volumes:
       - ./imagehost-data:/app/data
       - ./config.json:/app/config.json

@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
-	"os"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/h2non/filetype"
 )
 
 // Deletes your account with images
-func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
+func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
 	if !r.Form.Has("token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -35,13 +38,16 @@ func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, conf
 		var file_name string
 		rows.Scan(&file_name)
 
-		os.Remove(config.Data_folder + file_name)
+		s3client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(config.S3.Bucket),
+			Key:    aws.String(file_name),
+		})
 	}
 
 	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)
 }
 
-func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
+func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
 	if !r.Form.Has("upload_token") || !r.Form.Has("file_name") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -64,13 +70,16 @@ func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 		return
 	}
 
-	os.Remove(config.Data_folder + file_name)
+	s3client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(config.S3.Bucket),
+		Key:    aws.String(file_name),
+	})
 
 	db.Exec("DELETE FROM public.images WHERE file_name=$1 AND file_owner=$2", file_name, token_result.String)
 	fmt.Fprintln(w, "Successfully deleted image")
 }
 
-func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
+func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
 	if !r.Form.Has("upload_token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -112,7 +121,12 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 
 	full_file_name := generate_file_name(config.File_name_length) + "." + extension.Extension
 
-	if os.WriteFile(config.Data_folder+full_file_name, file, 0644) != nil {
+	if _, err := s3client.PutObject(&s3.PutObjectInput{
+		Body:   bytes.NewReader(file),
+		Bucket: aws.String(config.S3.Bucket),
+		Key:    aws.String(full_file_name),
+	}); err != nil {
+		log.Fatal(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

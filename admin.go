@@ -10,7 +10,7 @@ import (
 
 func is_admin(db *sql.DB, token string) bool {
 	var account_type string
-	row := db.QueryRow("select account_type from accounts where token=$1 AND account_type='ADMIN'", token)
+	row := db.QueryRow("SELECT account_type FROM accounts WHERE token=$1 AND account_type='ADMIN'", token)
 	if row.Scan(&account_type) == sql.ErrNoRows {
 		return false
 	}
@@ -32,7 +32,7 @@ func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	var new_user User
-	row := db.QueryRow("INSERT INTO public.accounts DEFAULT values returning token, upload_token, id, account_type")
+	row := db.QueryRow("INSERT INTO public.accounts DEFAULT values RETURNING token, upload_token, id, account_type")
 	if row.Scan(&new_user.Token, &new_user.Upload_token, &new_user.Id, &new_user.Account_type) == sql.ErrNoRows {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -47,7 +47,7 @@ func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintln(w, string(json))
 }
 
-func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("token") || !r.Form.Has("id") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -63,7 +63,7 @@ func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	db.Exec("DELETE FROM public.accounts WHERE id=$1", id)
 
-	rows, err := db.Query("select file_name from public.images WHERE file_owner=$1", id)
+	rows, err := db.Query("SELECT file_name FROM public.images WHERE file_owner=$1", id)
 	if err != nil { // Im guessing this happens when it gets no results
 		return
 	}
@@ -72,10 +72,10 @@ func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		var file_name string
 		rows.Scan(&file_name)
 
-		os.Remove("/app/data/" + file_name)
+		os.Remove(config.Data_folder + file_name)
 	}
 
-	db.Exec("delete from public.images WHERE file_owner=$1", id)
+	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)
 
 	fmt.Fprintf(w, "User %s deleted\n", id)
 }

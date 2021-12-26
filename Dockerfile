@@ -8,6 +8,7 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 
+COPY config.json .
 COPY public/ public/
 COPY template/ template/
 COPY auto_deletion.go .

@@ -1,3 +1,4 @@
 #!/bin/env bash
-docker build -t ayay2021/imagehost .
-docker push ayay2021/imagehost:latest
+mkdir ./bin
+CGO_ENABLED=0 go build -o ./bin/imagehost
+tar czf ./bin/build.tar.gz ./bin/imagehost template/ public/

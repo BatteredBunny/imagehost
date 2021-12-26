@@ -9,11 +9,11 @@ services:
       - PGID=1000
       - UMASK=002
       - TZ=Etc/UTC
-      - POSTGRES_CONN=host=db port=5432 user=postgres password=123 dbname=imagehost sslmode=disable
     ports:
         - 1111:80
     volumes:
-      - /run/media/lain/data/server_configs/imagehost/cdn:/app/data
+      - ./imagehost-data:/app/data
+      - ./config.json:/app/config.json
     depends_on:
       - db
     restart: unless-stopped

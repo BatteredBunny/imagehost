@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -49,7 +50,7 @@ func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintln(w, string(json))
 }
 
-func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
+func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("token") || !r.Form.Has("id") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -74,10 +75,14 @@ func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, confi
 		var file_name string
 		rows.Scan(&file_name)
 
-		s3client.DeleteObject(&s3.DeleteObjectInput{
-			Bucket: aws.String(config.S3.Bucket),
-			Key:    aws.String(file_name),
-		})
+		if config.s3client == nil {
+			os.Remove(config.Data_folder + file_name)
+		} else {
+			config.s3client.DeleteObject(&s3.DeleteObjectInput{
+				Bucket: aws.String(config.S3.Bucket),
+				Key:    aws.String(file_name),
+			})
+		}
 	}
 
 	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)

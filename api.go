@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -14,7 +15,7 @@ import (
 )
 
 // Deletes your account with images
-func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
+func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -38,16 +39,20 @@ func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, conf
 		var file_name string
 		rows.Scan(&file_name)
 
-		s3client.DeleteObject(&s3.DeleteObjectInput{
-			Bucket: aws.String(config.S3.Bucket),
-			Key:    aws.String(file_name),
-		})
+		if config.s3client == nil {
+			os.Remove(config.Data_folder + file_name)
+		} else {
+			config.s3client.DeleteObject(&s3.DeleteObjectInput{
+				Bucket: aws.String(config.S3.Bucket),
+				Key:    aws.String(file_name),
+			})
+		}
 	}
 
 	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)
 }
 
-func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
+func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("upload_token") || !r.Form.Has("file_name") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -70,16 +75,20 @@ func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 		return
 	}
 
-	s3client.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: aws.String(config.S3.Bucket),
-		Key:    aws.String(file_name),
-	})
+	if config.s3client == nil {
+		os.Remove(config.Data_folder + file_name)
+	} else {
+		config.s3client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(config.S3.Bucket),
+			Key:    aws.String(file_name),
+		})
+	}
 
 	db.Exec("DELETE FROM public.images WHERE file_name=$1 AND file_owner=$2", file_name, token_result.String)
 	fmt.Fprintln(w, "Successfully deleted image")
 }
 
-func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, s3client *s3.S3) {
+func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, logger *log.Logger) {
 	if !r.Form.Has("upload_token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -87,6 +96,7 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 
 	upload_token := r.FormValue("upload_token")
 
+	// Makes sure the token is valid
 	var result sql.NullString
 	if db.QueryRow("SELECT id FROM public.accounts WHERE upload_token=$1", upload_token).Scan(&result) != nil { // This error occurs when the token is incorrect
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -121,14 +131,22 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 
 	full_file_name := generate_file_name(config.File_name_length) + "." + extension.Extension
 
-	if _, err := s3client.PutObject(&s3.PutObjectInput{
-		Body:   bytes.NewReader(file),
-		Bucket: aws.String(config.S3.Bucket),
-		Key:    aws.String(full_file_name),
-	}); err != nil {
-		log.Fatal(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
+	if config.s3client == nil { // Uploads to local storage
+		if err := os.WriteFile(config.Data_folder+full_file_name, file, 0644); err != nil {
+			logger.Fatal(err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	} else { // Uploads to bucket
+		if _, err := config.s3client.PutObject(&s3.PutObjectInput{
+			Body:   bytes.NewReader(file),
+			Bucket: aws.String(config.S3.Bucket),
+			Key:    aws.String(full_file_name),
+		}); err != nil {
+			logger.Fatal(err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if _, err = db.Query(`INSERT INTO public.images (file_name, file_owner) VALUES ($1, $2)`, full_file_name, result.String); err != nil {

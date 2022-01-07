@@ -3,7 +3,7 @@ version: "3.7"
 services:
   imagehost:
     container_name: imagehost
-    image: imagehost
+    image: ayay2021/imagehost
     environment:
       - PUID=1000
       - PGID=1000

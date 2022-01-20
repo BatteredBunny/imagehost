@@ -14,7 +14,33 @@ import (
 	"github.com/h2non/filetype"
 )
 
-// Deletes your account with images
+func is_valid_token(db *sql.DB, token string) (bool, int) {
+	var id int
+	if db.QueryRow("SELECT id FROM accounts WHERE token=$1", token).Scan(&id) != nil {
+		return false, 0
+	}
+
+	return true, id
+}
+
+func is_valid_upload_token(db *sql.DB, token string) (bool, int) {
+	var id int
+	if db.QueryRow("SELECT id FROM accounts WHERE upload_token=$1", token).Scan(&id) != nil {
+		return false, 0
+	}
+
+	return true, id
+}
+
+func file_exists(db *sql.DB, file_name string) bool {
+	if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1", file_name).Scan() != nil {
+		return false
+	}
+
+	return true
+}
+
+// Api for deleting your own account
 func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -23,14 +49,14 @@ func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, conf
 
 	token := r.FormValue("token")
 
-	var id int
-	row := db.QueryRow("DELETE FROM accounts WHERE token=$1 RETURNING id", token)
-	if row.Scan(&id) == sql.ErrNoRows {
+	result, user_id := is_valid_token(db, token)
+	if !result {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
-	rows, err := db.Query("SELECT file_name FROM public.images WHERE file_owner=$1", id)
+	// Gets all images from account
+	rows, err := db.Query("SELECT file_name FROM public.images WHERE file_owner=$1", user_id)
 	if err != nil { // Im guessing this happens when it gets no results
 		return
 	}
@@ -39,19 +65,13 @@ func account_delete_api(w http.ResponseWriter, r *http.Request, db *sql.DB, conf
 		var file_name string
 		rows.Scan(&file_name)
 
-		if config.s3client == nil {
-			os.Remove(config.Data_folder + file_name)
-		} else {
-			config.s3client.DeleteObject(&s3.DeleteObjectInput{
-				Bucket: aws.String(config.S3.Bucket),
-				Key:    aws.String(file_name),
-			})
-		}
+		delete_file(config, file_name)
 	}
 
-	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)
+	db.Exec("DELETE FROM public.images WHERE file_owner=$1", user_id)
 }
 
+// Api for deleteing 1 image from your account
 func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("upload_token") || !r.Form.Has("file_name") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -61,33 +81,25 @@ func delete_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 	upload_token := r.FormValue("upload_token")
 	file_name := r.FormValue("file_name")
 
-	var token_result sql.NullString
-	if db.QueryRow(`SELECT id FROM public.accounts WHERE upload_token = $1`, upload_token).Scan(&token_result) != nil { // This error occurs when the token is incorrect
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	} else if !token_result.Valid {
+	// Makes sure the upload token is valid
+	result, user_id := is_valid_upload_token(db, upload_token)
+	if !result {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
-	if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1 AND file_owner=$2;", file_name, token_result.String).Scan() == sql.ErrNoRows {
+	// Makes sure the image exists
+	if !file_exists(db, file_name) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	if config.s3client == nil {
-		os.Remove(config.Data_folder + file_name)
-	} else {
-		config.s3client.DeleteObject(&s3.DeleteObjectInput{
-			Bucket: aws.String(config.S3.Bucket),
-			Key:    aws.String(file_name),
-		})
-	}
-
-	db.Exec("DELETE FROM public.images WHERE file_name=$1 AND file_owner=$2", file_name, token_result.String)
+	delete_file(config, file_name)
+	db.Exec("DELETE FROM public.images WHERE file_name=$1 AND file_owner=$2", file_name, user_id)
 	fmt.Fprintln(w, "Successfully deleted image")
 }
 
+// Api for uploading image
 func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config, logger *log.Logger) {
 	if !r.Form.Has("upload_token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -97,11 +109,8 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 	upload_token := r.FormValue("upload_token")
 
 	// Makes sure the token is valid
-	var result sql.NullString
-	if db.QueryRow("SELECT id FROM public.accounts WHERE upload_token=$1", upload_token).Scan(&result) != nil { // This error occurs when the token is incorrect
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	} else if !result.Valid {
+	result, user_id := is_valid_upload_token(db, upload_token)
+	if !result {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
@@ -149,7 +158,7 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 		}
 	}
 
-	if _, err = db.Query(`INSERT INTO public.images (file_name, file_owner) VALUES ($1, $2)`, full_file_name, result.String); err != nil {
+	if _, err = db.Query(`INSERT INTO public.images (file_name, file_owner) VALUES ($1, $2)`, full_file_name, user_id); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -160,6 +169,7 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 	fmt.Fprintln(w, "https://"+r.Host+"/"+full_file_name)
 }
 
+// Api for changing your upload token
 func new_upload_token_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if !r.Form.Has("token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -168,8 +178,13 @@ func new_upload_token_api(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	token := r.FormValue("token")
 
+	if result, _ := is_valid_token(db, token); !result {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
 	var new_token string
-	if db.QueryRow("UPDATE accounts SET upload_token=uuid_generate_v4() WHERE token=$1 RETURNING upload_token", token).Scan(&new_token) == sql.ErrNoRows {
+	if db.QueryRow("UPDATE accounts SET upload_token=uuid_generate_v4() WHERE token=$1 RETURNING upload_token", token).Scan(&new_token) != nil {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}

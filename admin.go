@@ -5,22 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+// Checks if the user is an admin with token
 func is_admin(db *sql.DB, token string) bool {
-	var account_type string
-	row := db.QueryRow("SELECT account_type FROM accounts WHERE token=$1 AND account_type='ADMIN'", token)
-	if row.Scan(&account_type) == sql.ErrNoRows {
-		return false
-	}
+	var result string
+	db.QueryRow("SELECT token FROM accounts WHERE token=$1 AND account_type='ADMIN'; ", token).Scan(&result)
 
-	return true
+	return result == token
 }
 
+// Admin api for creating new user
 func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if !r.Form.Has("token") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -36,7 +31,7 @@ func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	var new_user User
 	row := db.QueryRow("INSERT INTO public.accounts DEFAULT values RETURNING token, upload_token, id, account_type")
-	if row.Scan(&new_user.Token, &new_user.Upload_token, &new_user.Id, &new_user.Account_type) == sql.ErrNoRows {
+	if row.Scan(&new_user.Token, &new_user.Upload_token, &new_user.Id, &new_user.Account_type) != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -50,6 +45,7 @@ func admin_create_user(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintln(w, string(json))
 }
 
+// Admin api for deleting user
 func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, config Config) {
 	if !r.Form.Has("token") || !r.Form.Has("id") {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -66,6 +62,7 @@ func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, confi
 
 	db.Exec("DELETE FROM public.accounts WHERE id=$1", id)
 
+	// Gets all images from account
 	rows, err := db.Query("SELECT file_name FROM public.images WHERE file_owner=$1", id)
 	if err != nil { // Im guessing this happens when it gets no results
 		return
@@ -75,17 +72,9 @@ func admin_delete_user(w http.ResponseWriter, r *http.Request, db *sql.DB, confi
 		var file_name string
 		rows.Scan(&file_name)
 
-		if config.s3client == nil {
-			os.Remove(config.Data_folder + file_name)
-		} else {
-			config.s3client.DeleteObject(&s3.DeleteObjectInput{
-				Bucket: aws.String(config.S3.Bucket),
-				Key:    aws.String(file_name),
-			})
-		}
+		delete_file(config, file_name)
 	}
 
 	db.Exec("DELETE FROM public.images WHERE file_owner=$1", id)
-
 	fmt.Fprintf(w, "User %s deleted\n", id)
 }

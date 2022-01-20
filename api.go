@@ -33,7 +33,7 @@ func is_valid_upload_token(db *sql.DB, token string) (bool, int) {
 }
 
 func file_exists(db *sql.DB, file_name string) bool {
-	if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1", file_name).Scan() != nil {
+	if db.QueryRow("SELECT FROM public.images WHERE file_name=$1", file_name).Scan() != nil {
 		return false
 	}
 

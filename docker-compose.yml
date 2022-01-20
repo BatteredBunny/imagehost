@@ -19,10 +19,10 @@ services:
     restart: unless-stopped
 
   db:
-    container_name: postgres
+    container_name: postgres_imagehost
     image: postgres
     ports:
-        - 5433:5432
+      - 5433:5432
     environment:
       - POSTGRES_PASSWORD=123
       - POSTGRES_USER=postgres

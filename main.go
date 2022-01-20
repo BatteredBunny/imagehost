@@ -97,10 +97,10 @@ func main() {
 
 	http.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			r.ParseMultipartForm(int64(config.Max_upload_size))
+			r.Body = http.MaxBytesReader(w, r.Body, int64(config.Max_upload_size))
 
-			if r.ContentLength > int64(config.Max_upload_size) {
-				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+			if r.ParseMultipartForm(int64(config.Max_upload_size)) != nil {
+				fmt.Fprintf(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
 				return
 			}
 
@@ -152,7 +152,8 @@ func middleware(indexTemplate *template.Template, db *sql.DB, config Config, log
 			return
 		}
 
-		if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1;", path.Base(r.URL.Path)).Scan() == sql.ErrNoRows {
+		// Looks in database for uploaded file
+		if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1;", path.Base(r.URL.Path)).Scan() != nil {
 			http.Redirect(w, r, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", http.StatusFound)
 			return
 		}
@@ -165,6 +166,19 @@ func middleware(indexTemplate *template.Template, db *sql.DB, config Config, log
 	})
 }
 
+// Deletes a file
+func delete_file(config Config, file_name string) {
+	if config.s3client == nil { // Deletes from local storage
+		os.Remove(config.Data_folder + file_name)
+	} else { // Delete from s3
+		config.s3client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(config.S3.Bucket),
+			Key:    aws.String(file_name),
+		})
+	}
+}
+
+// Gets s3 session from config
 func prepeare_s3(config Config) *s3.S3 {
 	return s3.New(session.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(config.S3.Access_key_id, config.S3.Secret_access_key, ""),
@@ -174,6 +188,7 @@ func prepeare_s3(config Config) *s3.S3 {
 	}))
 }
 
+// Makes sure db is correctly setup and connects to it
 func prepeare_db(config Config, logger *log.Logger) *sql.DB {
 	db, err := sql.Open("postgres", config.Postgres_connection_string)
 	if err != nil {

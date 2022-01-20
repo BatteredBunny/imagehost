@@ -17,8 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dchest/uniuri"
-	"github.com/didip/tollbooth"
-	"github.com/didip/tollbooth/limiter"
+	"github.com/didip/tollbooth/v6"
+	"github.com/didip/tollbooth/v6/limiter"
 	_ "github.com/lib/pq"
 )
 
@@ -143,7 +143,7 @@ func main() {
 	}
 
 	http.Handle("/", tollbooth.LimitFuncHandler(rateLimiter, func(w http.ResponseWriter, r *http.Request) {
-		logger.Println(r.URL.Path, r.RemoteAddr)
+		logger.Println(r.URL.Path, r.Header.Get("X-Forwarded-For"))
 
 		if r.URL.Path == "/" {
 			if indexTemplate.Execute(w, r.Host) != nil {
@@ -154,7 +154,7 @@ func main() {
 		}
 
 		// Looks in database for uploaded file
-		if db.QueryRow("SELECT file_name FROM public.images WHERE file_name=$1;", path.Base(r.URL.Path)).Scan() != nil {
+		if db.QueryRow("SELECT FROM public.images WHERE file_name=$1", path.Base(r.URL.Path)).Scan() != nil {
 			http.Redirect(w, r, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", http.StatusFound)
 			return
 		}

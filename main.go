@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dchest/uniuri"
 	_ "github.com/lib/pq"
+	"golang.org/x/time/rate"
 )
 
 type User struct {
@@ -95,7 +96,14 @@ func main() {
 		}
 	})
 
+	var rateLimiter = rate.NewLimiter(2, 3)
 	http.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+		logger.Println(r.URL.Path)
+		if !rateLimiter.Allow() {
+			http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
+			return
+		}
+
 		if r.Method == "POST" {
 			r.Body = http.MaxBytesReader(w, r.Body, int64(config.Max_upload_size))
 
@@ -134,15 +142,20 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	http.Handle("/", middleware(indexTemplate, db, config, logger))
+	http.Handle("/", middleware(rateLimiter, indexTemplate, db, config, logger))
 
 	logger.Printf("Starting server at http://localhost:%s\n", config.Port)
 	logger.Fatal(http.ListenAndServe(":"+config.Port, nil))
 }
 
-func middleware(indexTemplate *template.Template, db *sql.DB, config Config, logger *log.Logger) http.Handler {
+func middleware(rateLimiter *rate.Limiter, indexTemplate *template.Template, db *sql.DB, config Config, logger *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Println(r.URL.Path)
+
+		if !rateLimiter.Allow() {
+			http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
+			return
+		}
 
 		if r.URL.Path == "/" {
 			if indexTemplate.Execute(w, r.Host) != nil {

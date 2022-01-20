@@ -10,14 +10,16 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/dchest/uniuri"
+	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth/limiter"
 	_ "github.com/lib/pq"
-	"golang.org/x/time/rate"
 )
 
 type User struct {
@@ -89,20 +91,18 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	http.HandleFunc("/api_list", func(w http.ResponseWriter, r *http.Request) {
+	rateLimiter := tollbooth.NewLimiter(2, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+	rateLimiter.SetIPLookups([]string{"X-Forwarded-For", "RemoteAddr", "X-Real-IP"})
+
+	http.Handle("/api_list", tollbooth.LimitFuncHandler(rateLimiter, func(w http.ResponseWriter, r *http.Request) {
 		if apiListTemplate.Execute(w, r.Host) != nil {
 			fmt.Fprintf(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-	})
+	}))
 
-	var rateLimiter = rate.NewLimiter(2, 3)
-	http.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/api/", tollbooth.LimitFuncHandler(rateLimiter, func(w http.ResponseWriter, r *http.Request) {
 		logger.Println(r.URL.Path)
-		if !rateLimiter.Allow() {
-			http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
-			return
-		}
 
 		if r.Method == "POST" {
 			r.Body = http.MaxBytesReader(w, r.Body, int64(config.Max_upload_size))
@@ -131,7 +131,7 @@ func main() {
 		} else {
 			http.NotFound(w, r)
 		}
-	})
+	}))
 
 	http.Handle("/public/",
 		http.StripPrefix("/public/", http.FileServer(http.Dir(config.Static_folder))),
@@ -142,20 +142,8 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	http.Handle("/", middleware(rateLimiter, indexTemplate, db, config, logger))
-
-	logger.Printf("Starting server at http://localhost:%s\n", config.Port)
-	logger.Fatal(http.ListenAndServe(":"+config.Port, nil))
-}
-
-func middleware(rateLimiter *rate.Limiter, indexTemplate *template.Template, db *sql.DB, config Config, logger *log.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Println(r.URL.Path)
-
-		if !rateLimiter.Allow() {
-			http.Error(w, http.StatusText(429), http.StatusTooManyRequests)
-			return
-		}
+	http.Handle("/", tollbooth.LimitFuncHandler(rateLimiter, func(w http.ResponseWriter, r *http.Request) {
+		logger.Println(r.URL.Path, r.RemoteAddr)
 
 		if r.URL.Path == "/" {
 			if indexTemplate.Execute(w, r.Host) != nil {
@@ -176,7 +164,10 @@ func middleware(rateLimiter *rate.Limiter, indexTemplate *template.Template, db 
 		} else {
 			http.Redirect(w, r, "https://"+config.S3.CDN_Domain+"/file/"+config.S3.Bucket+path.Clean(r.URL.Path), http.StatusFound)
 		}
-	})
+	}))
+
+	logger.Printf("Starting server at http://localhost:%s\n", config.Port)
+	logger.Fatal(http.ListenAndServe(":"+config.Port, nil))
 }
 
 // Deletes a file

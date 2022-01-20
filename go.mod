@@ -10,7 +10,10 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 )
 
+require github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+
 require (
+	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 )

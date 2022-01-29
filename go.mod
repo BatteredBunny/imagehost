@@ -3,7 +3,7 @@ module imagehost
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.42.37
+	github.com/aws/aws-sdk-go v1.42.44
 	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/didip/tollbooth/v6 v6.1.1
 	github.com/h2non/filetype v1.1.3

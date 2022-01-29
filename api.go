@@ -138,7 +138,13 @@ func upload_image_api(w http.ResponseWriter, r *http.Request, db *sql.DB, config
 		return
 	}
 
-	full_file_name := generate_file_name(config.File_name_length) + "." + extension.Extension
+	full_file_name := generate_file_name(config.File_name_length) + "."
+
+	if extension.Extension == "unknown" { // Unknown file type defaults to txt
+		full_file_name += "txt"
+	} else {
+		full_file_name += extension.Extension
+	}
 
 	if config.s3client == nil { // Uploads to local storage
 		if err := os.WriteFile(config.Data_folder+full_file_name, file, 0644); err != nil {

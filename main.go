@@ -134,7 +134,7 @@ func main() {
 	}))
 
 	http.Handle("/public/",
-		http.StripPrefix("/public/", http.FileServer(http.Dir(config.Static_folder))),
+		    http.StripPrefix("/public/", neuter(http.FileServer(http.Dir(config.Static_folder)))),
 	)
 
 	indexTemplate, err := template.New("index.html").ParseFiles(config.Template_folder + "index.html")
@@ -215,4 +215,15 @@ func prepeare_db(config Config, logger *log.Logger) *sql.DB {
 
 func generate_file_name(file_name_length int) string {
 	return uniuri.NewLenChars(file_name_length, []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"))
+}
+
+func neuter(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if strings.HasSuffix(r.URL.Path, "/") {
+            http.NotFound(w, r)
+            return
+        }
+
+        next.ServeHTTP(w, r)
+    })
 }

@@ -15,7 +15,8 @@
             <h1>epic file host</h1>
             <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{.}}/api/upload</code>
 
-            <p>Files are kept for 7 days, <a href="https://github.com/BatteredBunny/imagehost">source code</a>, <a href="https://{{.}}/api_list">api list</a></p>
+            <p>Files are kept for 7 days, <a href="https://github.com/BatteredBunny/imagehost">source code</a>, <a
+                    href="/api_list">api list</a></p>
         </div>
 
         <form action="/api/upload" method="POST" enctype="multipart/form-data">
@@ -30,7 +31,7 @@
             <input type="submit" value="Upload">
         </form>
 
-        <img class="neco" src="/public/neco_crab.gif" alt="Neco eating crab">
+        <img alt="Neco eating crab" class="neco" height="180" src="/public/neco_crab.gif" width="224">
     </div>
 </body>
 </html>

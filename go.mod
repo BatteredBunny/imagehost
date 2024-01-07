@@ -1,4 +1,4 @@
-module github.com/ayes-web/imagehost
+module github.com/BatteredBunny/imagehost
 
 go 1.18
 

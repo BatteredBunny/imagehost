@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-package main
+package cmd
 
 import (
 	"context"
@@ -220,7 +220,7 @@ func addRouter(uninitializedApp *uninitializedApplication) (app *Application) {
 
 type uninitializedApplication Application
 
-func initializeApplication() *Application {
+func InitializeApplication() *Application {
 	panic(wire.Build(wire.NewSet(
 		setupLogging,
 		initializeConfig,

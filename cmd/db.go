@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -69,7 +69,7 @@ func (db *Database) deleteImageUploadToken(fileName string, uploadToken string) 
 //}
 
 const insertNewImageUploadTokenQuery = `
-INSERT INTO public.images (file_name, file_uploader) 
+INSERT INTO public.images (file_name, file_uploader)
 VALUES ($1, (SELECT id FROM accounts WHERE upload_token=$2));
 `
 
@@ -268,7 +268,7 @@ func (db *Database) createNewAdmin() (account accountModel, err error) {
 }
 
 const findAdminByTokenQuery = `
-SELECT FROM accounts WHERE token=$1 AND account_type='ADMIN'::account_type; 
+SELECT FROM accounts WHERE token=$1 AND account_type='ADMIN'::account_type;
 `
 
 func (db *Database) findAdminByToken(token string) (err error) {

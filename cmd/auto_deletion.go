@@ -1,10 +1,10 @@
-package main
+package cmd
 
 import (
 	"github.com/robfig/cron/v3"
 )
 
-func (app *Application) autoDeletion() {
+func (app *Application) AutoDeletion() {
 	c := cron.New()
 
 	if _, err := c.AddFunc("@hourly", func() {

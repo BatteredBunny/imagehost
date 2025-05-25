@@ -1,12 +1,13 @@
-package main
+package cmd
 
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/jackc/pgx/v4"
-	"net/http"
 )
 
 // Checks if the user is an admin with token

@@ -5,3 +5,4 @@ config.toml
 result
 .direnv
 imagehost-data
+imagehost

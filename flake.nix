@@ -21,7 +21,7 @@
     in
     {
       overlays.default = final: prev: {
-        tiredmoe = final.callPackage ./build.nix { };
+        imagehost = final.callPackage ./build.nix { };
       };
 
       packages = forAllSystems (system:
@@ -30,8 +30,8 @@
           overlay = lib.makeScope pkgs.newScope (final: self.overlays.default final pkgs);
         in
         {
-          inherit (overlay) tiredmoe;
-          default = overlay.tiredmoe;
+          inherit (overlay) imagehost;
+          default = overlay.imagehost;
         }
       );
 
@@ -47,7 +47,5 @@
             ];
           };
         });
-
-      nixosModules.default = import ./module.nix;
     };
 }

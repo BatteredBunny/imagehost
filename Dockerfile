@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY *.go ./
 
 RUN go build -o /app/imagehost
 
-FROM alpine:3.15
+FROM alpine:3.21
 
 VOLUME [ "/app/data" ]
 EXPOSE 80

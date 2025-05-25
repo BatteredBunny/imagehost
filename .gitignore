@@ -4,3 +4,4 @@ bin/
 config.toml
 result
 .direnv
+imagehost-data

@@ -13,3 +13,11 @@ Use example_local.toml
 ## S3/B2 bucket
 
 Look in example_s3.toml for what settings to add to your config.
+
+# Dev setup with docker
+
+Uncomment ``./example_docker.toml:/app/config.toml`` in docker-compose.yml
+
+Run ``docker compose up --build`` and then visit http://localhost:8080/
+
+Thats it!

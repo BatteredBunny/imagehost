@@ -3,6 +3,7 @@ build:
 
 clean:
 	go clean
+	rm -rf ./data ./imagehost-data ./imagehost.db
 
 docker:
 	docker build -t ayay2021/imagehost .

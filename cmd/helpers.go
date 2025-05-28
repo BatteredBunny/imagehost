@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"errors"
-	"github.com/dchest/uniuri"
+	"os"
+
+	"crypto/rand"
+
+	"github.com/google/uuid"
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
-	"github.com/jackc/pgx/v4"
-	"os"
+	"gorm.io/gorm"
 )
 
 func (app *Application) deleteFile(fileName string) (err error) {
@@ -22,8 +25,8 @@ func (app *Application) deleteFile(fileName string) (err error) {
 	return
 }
 
-func randomString(fileNameLength int) string {
-	return uniuri.NewLenChars(fileNameLength, []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"))
+func randomString() string {
+	return rand.Text()
 }
 
 func (app *Application) generateFullFileName(file []byte) (name string, err error) {
@@ -34,17 +37,17 @@ func (app *Application) generateFullFileName(file []byte) (name string, err erro
 	}
 
 	if extension.Extension == "unknown" { // Unknown file type defaults to txt
-		name = randomString(app.config.FileNameLength) + "." + "txt"
+		name = randomString() + "." + "txt"
 		return
 	}
 
-	name = randomString(app.config.FileNameLength) + "." + extension.Extension
+	name = randomString() + "." + extension.Extension
 	return
 }
 
-func (app *Application) isValidToken(token string) (bool, error) {
+func (app *Application) isValidUserToken(token uuid.UUID) (bool, error) {
 	if _, err := app.db.idByToken(token); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 
@@ -53,9 +56,9 @@ func (app *Application) isValidToken(token string) (bool, error) {
 
 	return true, nil
 }
-func (app *Application) isValidUploadToken(uploadToken string) (bool, error) {
+func (app *Application) isValidUploadToken(uploadToken uuid.UUID) (bool, error) {
 	if _, err := app.db.idByUploadToken(uploadToken); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 

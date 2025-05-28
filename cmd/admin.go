@@ -7,13 +7,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/jackc/pgx/v4"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // Checks if the user is an admin with token
-func (app *Application) isAdmin(token string) (bool, error) {
+func (app *Application) isAdmin(token uuid.UUID) (bool, error) {
 	if err := app.db.findAdminByToken(token); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
 

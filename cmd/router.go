@@ -3,23 +3,34 @@ package cmd
 import (
 	"time"
 
-	"github.com/didip/tollbooth/v6"
-	"github.com/didip/tollbooth/v6/limiter"
+	"github.com/didip/tollbooth/v8"
+	"github.com/didip/tollbooth/v8/limiter"
 	"github.com/gin-gonic/gin"
 )
 
-func setupRatelimiting() *limiter.Limiter {
+func setupRatelimiting(c Config) *limiter.Limiter {
 	rateLimiter := tollbooth.NewLimiter(2, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
-	rateLimiter.SetIPLookups([]string{"X-Forwarded-For", "RemoteAddr", "X-Real-IP"})
+
+	if c.behindReverseProxy {
+		rateLimiter.SetIPLookup(limiter.IPLookup{
+			Name: "X-Forwarded-For",
+		})
+	} else {
+		rateLimiter.SetIPLookup(limiter.IPLookup{
+			Name: "RemoteAddr",
+		})
+	}
 
 	return rateLimiter
 }
 
-func addRouter(uninitializedApp *uninitializedApplication) (app *Application) {
+func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *Application) {
 	app = (*Application)(uninitializedApp)
 	app.logInfo.Println("Setting up router")
-	gin.SetMode(gin.ReleaseMode)
+
 	app.Router = gin.Default()
+	app.Router.ForwardedByClientIP = c.behindReverseProxy
+	app.Router.SetTrustedProxies([]string{c.trustedProxy})
 
 	app.Router.Use(
 		app.bodySizeMiddleware(),
@@ -35,7 +46,7 @@ func addRouter(uninitializedApp *uninitializedApplication) (app *Application) {
 		app.uploadTokenVerificationMiddleware(),
 	)
 
-	fileAPI.POST("/upload", app.uploadImageAPI).Use()
+	fileAPI.POST("/upload", app.uploadImageAPI)
 	fileAPI.POST("/delete", app.deleteImageAPI)
 	// ---
 

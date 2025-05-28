@@ -14,7 +14,7 @@ func InitializeApplication() *Application {
 	config := initializeConfig(logger)
 	database := prepareDB(logger, config)
 	s3 := prepareStorage(logger, config)
-	limiter := setupRatelimiting()
+	limiter := setupRatelimiting(config)
 	cmdUninitializedApplication := &uninitializedApplication{
 		Logger:      logger,
 		Templates:   templates,
@@ -23,7 +23,7 @@ func InitializeApplication() *Application {
 		s3client:    s3,
 		RateLimiter: limiter,
 	}
-	application := addRouter(cmdUninitializedApplication)
+	application := setupRouter(cmdUninitializedApplication, config)
 	return application
 }
 

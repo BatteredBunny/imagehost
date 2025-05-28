@@ -20,7 +20,7 @@ in
     createDbLocally = lib.mkEnableOption "creation of database on the instance";
 
     settings = {
-      web_port = lib.mkOption {
+      port = lib.mkOption {
         type = lib.types.int;
         apply = toString;
         description = "port to run service on";
@@ -45,16 +45,22 @@ in
         description = "Max upload size in bytes";
       };
 
-      file_name_length = lib.mkOption {
-        type = lib.types.int;
-        default = 15;
-        description = "How long the randomly generated filename should be, longer urls are more secure";
-      };
-
       data_folder = lib.mkOption {
         type = lib.types.path;
         default = "/var/lib/imagehost/data";
         description = "Folder to store local image data in";
+      };
+
+      behind_reverse_proxy = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Allows using trusted proxy settings";
+      };
+
+      trusted_proxy = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Which proxy to trust for IP information";
       };
 
       # s3 = {

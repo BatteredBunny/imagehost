@@ -16,7 +16,6 @@ VOLUME [ "/app/data" ]
 EXPOSE 80
 WORKDIR /app
 
-COPY example_docker.toml /app/config.toml
 COPY --from=builder /app/imagehost /app/imagehost
 
 ENTRYPOINT [ "/app/imagehost", "-c", "/app/config.toml" ]

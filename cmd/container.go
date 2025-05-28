@@ -28,6 +28,6 @@ func InitializeApplication() *Application {
 			"RateLimiter",
 		),
 
-		addRouter,
+		setupRouter, // Finishes the setup
 	)))
 }

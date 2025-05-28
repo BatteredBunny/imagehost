@@ -8,13 +8,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/jackc/pgx/v4"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // Api for deleting your own account
 func (app *Application) accountDeleteAPI(c *gin.Context) {
-	userID, err := app.db.idByToken(c.GetString("token"))
-	if errors.Is(err, pgx.ErrNoRows) {
+	rawToken := c.GetString("token")
+	token, err := uuid.Parse(rawToken)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	userID, err := app.db.idByToken(token)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {
@@ -79,13 +87,22 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.deleteFile(input.FileName); err != nil { // Deletes file
+	// Deletes file
+	if err = app.deleteFile(input.FileName); err != nil {
 		app.logError.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	if err = app.db.deleteImage(input.FileName, c.GetString("uploadToken")); err != nil { // Deletes file entry from database
+	// Should have been verified with middleware already
+	rawUploadToken := c.GetString("uploadToken")
+	uploadToken, err := uuid.Parse(rawUploadToken)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err = app.db.deleteImage(input.FileName, uploadToken); err != nil { // Deletes file entry from database
 		app.logError.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -133,7 +150,19 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.insertNewImageUploadToken(fullFileName, c.GetString("uploadToken")); err != nil {
+	// Should have been verified with middleware already
+	rawUploadToken := c.GetString("uploadToken")
+	uploadToken, err := uuid.Parse(rawUploadToken)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	err = app.db.insertNewImageUploadToken(fullFileName, uploadToken)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
 		app.logError.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -144,9 +173,16 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 
 // Api for changing your upload token
 func (app *Application) newUploadTokenAPI(c *gin.Context) {
-	uploadToken, err := app.db.replaceUploadToken(c.GetString("token"))
+	rawToken := c.GetString("token")
+	token, err := uuid.Parse(rawToken)
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	uploadToken, err := app.db.replaceUploadToken(token)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			app.logError.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return

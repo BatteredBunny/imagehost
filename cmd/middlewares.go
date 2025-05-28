@@ -3,7 +3,7 @@ package cmd
 import (
 	"net/http"
 
-	"github.com/didip/tollbooth/v6"
+	"github.com/didip/tollbooth/v8"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
@@ -71,14 +71,26 @@ func hasTokenMiddleware() gin.HandlerFunc {
 
 func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if token, exists := c.Get("token"); !exists {
+		// Verify the field exists
+		rawToken, exists := c.Get("token")
+		if !exists {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
-		} else if isAdmin, err := app.isAdmin(token.(string)); err != nil {
+		}
+
+		// Verify its valid format
+		token, err := uuid.Parse(rawToken.(string))
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		isAdmin, err := app.isAdmin(token)
+		if err != nil { // Could be a database error
 			app.logError.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
-		} else if !isAdmin {
+		} else if !isAdmin { // Invalid token or not an admin account
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -88,14 +100,26 @@ func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
 }
 func (app *Application) userTokenVerificationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if token, exists := c.Get("token"); !exists {
+		// Verify the field exists
+		rawToken, exists := c.Get("token")
+		if !exists {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
-		} else if valid, err := app.isValidToken(token.(string)); err != nil {
+		}
+
+		// Verify its valid format
+		token, err := uuid.Parse(rawToken.(string))
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		valid, err := app.isValidUserToken(token)
+		if err != nil { // Could be a database error
 			app.logError.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
-		} else if !valid {
+		} else if !valid { // Wrong or expired token given
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -133,14 +157,26 @@ func hasUploadTokenMiddleware() gin.HandlerFunc {
 
 func (app *Application) uploadTokenVerificationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if uploadToken, exists := c.Get("uploadToken"); !exists {
+		// Verify the field exists
+		rawUploadToken, exists := c.Get("uploadToken")
+		if !exists {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
-		} else if valid, err := app.isValidUploadToken(uploadToken.(string)); err != nil {
+		}
+
+		// Verify its valid format
+		token, err := uuid.Parse(rawUploadToken.(string))
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		valid, err := app.isValidUploadToken(token)
+		if err != nil { // Could be a database error
 			app.logError.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
-		} else if !valid {
+		} else if !valid { // Wrong or expired token given
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

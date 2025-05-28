@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/didip/tollbooth/v6/limiter"
+	"github.com/didip/tollbooth/v8/limiter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,15 +41,16 @@ type Templates struct {
 
 type Config struct {
 	DataFolder            string `toml:"data_folder"`
-	FileNameLength        int    `toml:"file_name_length"`
 	MaxUploadSize         int64  `toml:"max_upload_size"`
 	DatabaseType          string `toml:"database_type"`
 	DatabaseConnectionUrl string `toml:"database_connection_url"`
-	WebPort               string `toml:"web_port"`
+	Port                  string `toml:"port"`
+
+	behindReverseProxy bool   `toml:"behind_reverse_proxy"`
+	trustedProxy       string `toml:"trusted_proxy"`
 
 	fileStorageMethod fileStorageMethod
-
-	S3 s3Config `toml:"s3"`
+	S3                s3Config `toml:"s3"`
 }
 
 type s3Config struct {
@@ -62,6 +63,6 @@ type s3Config struct {
 }
 
 func (app *Application) Run() {
-	app.logInfo.Printf("Starting server at http://localhost:%s\n", app.config.WebPort)
-	app.logError.Fatal(http.ListenAndServe(":"+app.config.WebPort, app.Router))
+	app.logInfo.Printf("Starting server at http://localhost:%s\n", app.config.Port)
+	app.logError.Fatal(http.ListenAndServe(":"+app.config.Port, app.Router))
 }

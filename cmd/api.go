@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -25,13 +26,13 @@ func (app *Application) accountDeleteAPI(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to fetch user by session token")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	if err = app.deleteAccountWithImages(account.ID); err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to delete own account")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -45,7 +46,7 @@ func (app *Application) deleteAccountWithImages(userID uint) (err error) {
 
 	for _, image := range images {
 		if err = app.deleteFile(image.FileName); err != nil {
-			app.logError.Println(err)
+			log.Err(err).Msg("Failed to delete image")
 		}
 	}
 
@@ -78,7 +79,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 	// Makes sure the image exists
 	var exists bool
 	if exists, err = app.db.fileExists(input.FileName); err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to check if file exists")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	} else if !exists {
@@ -88,7 +89,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 
 	// Deletes file
 	if err = app.deleteFile(input.FileName); err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to delete file")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +102,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 	}
 
 	if err = app.db.deleteImage(input.FileName, uploadToken.(uuid.UUID)); err != nil { // Deletes file entry from database
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to delete image entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -121,17 +122,12 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 
 	file, err := io.ReadAll(fileRaw)
 	if err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to read uploaded file")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	fullFileName, err := app.generateFullFileName(file)
-	if err != nil {
-		app.logError.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
+	fullFileName := app.generateFullFileName(file)
 
 	switch app.config.fileStorageMethod {
 	case fileStorageS3:
@@ -143,7 +139,7 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 	}
 
 	if err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Upload issue")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -160,7 +156,7 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to create image entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -179,7 +175,7 @@ func (app *Application) newUploadTokenAPI(c *gin.Context) {
 	uploadToken, err := app.db.replaceUploadToken(token.(uuid.UUID))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			app.logError.Println(err)
+			log.Err(err).Msg("Failed to replace upload token")
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}

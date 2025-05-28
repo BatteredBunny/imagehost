@@ -11,6 +11,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -89,7 +90,7 @@ func (app *Application) loginCallback(c *gin.Context) {
 		}
 
 		if err := app.db.updateGithubUsername(account.ID, user.NickName); err != nil {
-			app.logWarning.Println("Failed to update github username:", err)
+			log.Warn().Err(err).Msg("Failed to update github username")
 		}
 
 		sessionToken, err := app.db.createSessionToken(account.ID)
@@ -186,7 +187,7 @@ func (app *Application) logoutHandler(c *gin.Context) {
 	}
 
 	if err = app.db.deleteSession(sessionToken); err != nil {
-		app.logError.Print("Failed to delete session from db:", err)
+		log.Err(err).Msg("Failed to delete session from db")
 	}
 
 	clearAuthCookie(c)

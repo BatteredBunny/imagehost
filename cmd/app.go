@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"io/fs"
-	"log"
 	"net/http"
 	"os"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/rs/zerolog/log"
 )
 
 var ErrUnknownStorageMethod = errors.New("unknown file storage method")
@@ -30,20 +30,10 @@ func PublicFiles() http.FileSystem {
 	return http.FS(sub)
 }
 
-func setupLogging() *Logger {
-	flags := log.Ldate | log.Ltime | log.Lshortfile | log.Lmsgprefix
-
-	return &Logger{
-		logInfo:    log.New(os.Stdout, "INFO: ", flags),
-		logError:   log.New(os.Stdout, "ERROR: ", flags),
-		logWarning: log.New(os.Stdout, "WARN: ", flags),
-	}
-}
-
-func prepareStorage(l *Logger, c Config) (s3client *s3.S3) {
+func prepareStorage(c Config) (s3client *s3.S3) {
 	switch c.fileStorageMethod {
 	case fileStorageS3:
-		l.logInfo.Println("Storing files in s3 bucket")
+		log.Info().Msg("Storing files in s3 bucket")
 
 		if s3session, err := session.NewSession(&aws.Config{
 			Credentials:      credentials.NewStaticCredentials(c.S3.AccessKeyID, c.S3.SecretAccessKey, ""),
@@ -51,39 +41,39 @@ func prepareStorage(l *Logger, c Config) (s3client *s3.S3) {
 			Region:           aws.String(c.S3.Region),
 			S3ForcePathStyle: aws.Bool(true),
 		}); err != nil {
-			l.logInfo.Fatal(err)
+			log.Fatal().Err(err).Msg("Failed to create s3 session")
 		} else {
 			s3client = s3.New(s3session)
 		}
 	case fileStorageLocal:
-		l.logInfo.Println("Storing files in", c.DataFolder)
+		log.Info().Msgf("Storing files in %s", c.DataFolder)
 
 		if file, _ := os.Stat(c.DataFolder); file == nil {
-			l.logInfo.Println("Creating data folder")
+			log.Info().Msg("Creating data folder")
 
-			if err := os.Mkdir(c.DataFolder, 0777); err != nil {
-				l.logError.Fatal(err)
+			if err := os.Mkdir(c.DataFolder, 0770); err != nil {
+				log.Fatal().Err(err).Msg("Failed to create data folder")
 			}
 		}
 	default:
-		l.logError.Fatal(ErrUnknownStorageMethod)
+		log.Fatal().Err(ErrUnknownStorageMethod).Msg("Can't setup storage, none selected")
 	}
 
 	return
 }
 
-func initializeConfig(l *Logger) (c Config) {
+func initializeConfig() (c Config) {
 	var configLocation string
 	flag.StringVar(&configLocation, "c", "config.toml", "Location of config file")
 	flag.Parse()
 
 	rawConfig, err := os.ReadFile(configLocation)
 	if err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to open config file")
 	}
 
 	if _, err = toml.Decode(string(rawConfig), &c); err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Can't parse config file")
 	}
 
 	if c.S3 != (s3Config{}) {

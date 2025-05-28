@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 // Checks if the user is an admin with token
@@ -25,7 +26,7 @@ func (app *Application) isAdmin(sessionToken uuid.UUID) (isAdmin bool, err error
 func (app *Application) adminCreateUser(c *gin.Context) {
 	user, err := app.db.createAccount("ADMIN")
 	if err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to create admin account")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -49,7 +50,7 @@ func (app *Application) adminDeleteUser(c *gin.Context) {
 	}
 
 	if err = app.deleteAccountWithImages(input.ID); err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to delete account")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

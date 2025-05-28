@@ -8,6 +8,7 @@ import (
 	"github.com/didip/tollbooth/v8"
 	"github.com/didip/tollbooth/v8/limiter"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func setupRatelimiting(c Config) *limiter.Limiter {
@@ -31,7 +32,7 @@ var TemplateFiles embed.FS
 
 func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *Application) {
 	app = (*Application)(uninitializedApp)
-	app.logInfo.Println("Setting up router")
+	log.Info().Msg("Setting up router")
 
 	app.Router = gin.Default()
 	app.Router.ForwardedByClientIP = c.behindReverseProxy

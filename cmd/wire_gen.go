@@ -9,13 +9,11 @@ package cmd
 // Injectors from container.go:
 
 func InitializeApplication() *Application {
-	logger := setupLogging()
-	config := initializeConfig(logger)
-	database := prepareDB(logger, config)
-	s3 := prepareStorage(logger, config)
+	config := initializeConfig()
+	database := prepareDB(config)
+	s3 := prepareStorage(config)
 	limiter := setupRatelimiting(config)
 	cmdUninitializedApplication := &uninitializedApplication{
-		Logger:      logger,
 		config:      config,
 		db:          database,
 		s3client:    s3,

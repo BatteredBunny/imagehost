@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func (app *Application) apiList(c *gin.Context) {
@@ -97,7 +98,7 @@ func (app *Application) indexFiles(c *gin.Context) {
 
 	// Looks in database for uploaded file
 	if exists, err := app.db.fileExists(path.Base(path.Clean(c.Request.URL.Path))); err != nil {
-		app.logError.Println(err)
+		log.Err(err).Msg("Failed to check if file exists")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	} else if !exists {
@@ -110,7 +111,7 @@ func (app *Application) indexFiles(c *gin.Context) {
 	case fileStorageLocal:
 		c.File(filepath.Join(app.config.DataFolder, path.Clean(c.Request.URL.Path)))
 	default:
-		app.logError.Println(ErrUnknownStorageMethod)
+		log.Err(ErrUnknownStorageMethod).Msg("No storage method chosen")
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 }

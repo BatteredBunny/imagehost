@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -71,8 +72,8 @@ type InviteCodes struct {
 
 var ErrInvalidDatabaseType = errors.New("Invalid database type")
 
-func prepareDB(l *Logger, c Config) (database Database) {
-	l.logInfo.Println("Setting up database")
+func prepareDB(c Config) (database Database) {
+	log.Info().Msg("Setting up database")
 
 	var gormConnection gorm.Dialector
 	if c.DatabaseType == "postgresql" {
@@ -80,13 +81,13 @@ func prepareDB(l *Logger, c Config) (database Database) {
 	} else if c.DatabaseType == "sqlite" {
 		gormConnection = sqlite.Open(c.DatabaseConnectionUrl)
 	} else {
-		l.logError.Fatal(ErrInvalidDatabaseType)
+		log.Fatal().Err(ErrInvalidDatabaseType).Msg("Invalid database chosehn")
 	}
 
 	var err error
 	database.DB, err = gorm.Open(gormConnection, &gorm.Config{})
 	if err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to open database connection")
 	}
 
 	if err := database.DB.AutoMigrate(
@@ -95,26 +96,26 @@ func prepareDB(l *Logger, c Config) (database Database) {
 		&InviteCodes{},
 		&SessionTokens{},
 	); err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Migration failed")
 	}
 
 	// Create the first admin user if no user with ID 1 exists
 	userAmount, err := database.userAmount()
 	if err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to get user amount")
 	}
 	inviteCodeAmount, err := database.inviteCodeAmount()
 	if err != nil {
-		l.logError.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to get invite amount")
 	}
 
 	if userAmount == 0 && inviteCodeAmount == 0 {
 		inviteCode, err := database.createInviteCode(1, "ADMIN", 0)
 		if err != nil {
-			l.logError.Fatal(err)
+			log.Fatal().Err(err).Msg("Failed to create initial invite")
 		}
 
-		l.logWarning.Println("No accounts found, please create your account via this registration token:", inviteCode.Code)
+		log.Warn().Msgf("No accounts found, please create your account via this registration token: %s", inviteCode.Code)
 	}
 
 	return

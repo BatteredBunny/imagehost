@@ -1,20 +1,21 @@
 package cmd
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/didip/tollbooth/v8/limiter"
 	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type Application struct {
-	*Logger
 	config      Config
 	db          Database
 	s3client    *s3.S3
 	RateLimiter *limiter.Limiter
+	cron        gocron.Scheduler
 
 	Router *gin.Engine
 }
@@ -25,12 +26,6 @@ const (
 	fileStorageLocal fileStorageMethod = "LOCAL"
 	fileStorageS3    fileStorageMethod = "S3"
 )
-
-type Logger struct {
-	logError   *log.Logger
-	logWarning *log.Logger
-	logInfo    *log.Logger
-}
 
 type Config struct {
 	DataFolder            string `toml:"data_folder"`
@@ -56,6 +51,6 @@ type s3Config struct {
 }
 
 func (app *Application) Run() {
-	app.logInfo.Printf("Starting server at http://localhost:%s\n", app.config.Port)
-	app.logError.Fatal(http.ListenAndServe(":"+app.config.Port, app.Router))
+	log.Info().Msgf("Starting server at http://localhost:%s", app.config.Port)
+	log.Fatal().Err(http.ListenAndServe(":"+app.config.Port, app.Router)).Msg("HTTP server failed")
 }

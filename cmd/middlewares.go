@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -87,7 +88,7 @@ func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
 
 		isAdmin, err := app.isAdmin(token.(uuid.UUID))
 		if err != nil { // Could be a database error
-			app.logError.Println(err)
+			log.Err(err).Msg("Failed to check if user is admin")
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		} else if !isAdmin { // Invalid token or not an admin account
@@ -113,7 +114,7 @@ func (app *Application) userTokenVerificationMiddleware() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} else if err != nil {
-			app.logError.Println(err)
+			log.Err(err).Msg("Failed to find user by session token")
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -163,7 +164,7 @@ func (app *Application) uploadTokenVerificationMiddleware() gin.HandlerFunc {
 
 		valid, err := app.isValidUploadToken(uploadToken.(uuid.UUID))
 		if err != nil { // Could be a database error
-			app.logError.Println(err)
+			log.Err(err).Msg("Failed to check if upload token is valid")
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		} else if !valid { // Wrong or expired token given

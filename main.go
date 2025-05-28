@@ -7,7 +7,7 @@ import (
 func main() {
 	app := cmd.InitializeApplication()
 
-	go app.AutoDeletion()
+	app.StartJobScheudler()
 
 	app.Run()
 }

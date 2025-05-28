@@ -23,7 +23,16 @@
 
         <p>{{ .ImagesCount }} images</p>
 
-        <p>Upload token: <code>{{ .UploadToken }}</code></p>
+        <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
+            <input type="submit" value="Create new upload token">
+        </form>
+
+        <p>Upload tokens:</p>
+        <ul>
+            {{ range .UploadTokens }}
+            <li><code>{{ . }}</code></li>
+            {{ end }}
+        </ul>
     </div>
 </body>
 

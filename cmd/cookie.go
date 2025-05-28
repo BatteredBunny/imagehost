@@ -37,7 +37,6 @@ var ErrInvalidAuthCookie = errors.New("Invalid session token")
 func (app *Application) validateCookie(c *gin.Context) (sessionToken uuid.UUID, account Accounts, loggedIn bool, err error) {
 	rawSessionToken, err := c.Cookie(AUTH_COOKIE)
 	if errors.Is(err, http.ErrNoCookie) {
-		loggedIn = false
 		err = nil
 		return
 	} else if err != nil {
@@ -52,7 +51,6 @@ func (app *Application) validateCookie(c *gin.Context) (sessionToken uuid.UUID, 
 
 	if account, err = app.db.getUserBySessionToken(sessionToken); errors.Is(err, gorm.ErrRecordNotFound) {
 		err = ErrInvalidAuthCookie
-		loggedIn = false
 		return
 	} else if err != nil {
 		return

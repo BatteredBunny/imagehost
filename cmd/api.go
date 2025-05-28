@@ -151,7 +151,7 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	err = app.db.insertNewImageUploadToken(fullFileName, uploadToken.(uuid.UUID))
+	err = app.db.createImageEntry(fullFileName, uploadToken.(uuid.UUID))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -162,27 +162,4 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusTemporaryRedirect, "/"+fullFileName)
-}
-
-// Api for changing your upload token
-func (app *Application) newUploadTokenAPI(c *gin.Context) {
-	token, exists := c.Get("token")
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	uploadToken, err := app.db.replaceUploadToken(token.(uuid.UUID))
-	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Err(err).Msg("Failed to replace upload token")
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	c.String(http.StatusOK, uploadToken)
 }

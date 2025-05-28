@@ -14,13 +14,12 @@
 <body>
     <div class="container">
         <p><a href="/">Home</a></p>
-        
+
         <h1>Api list</h1>
 
         <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png'     https://{{.}}<b>/api/file/upload</b></code><br>
         <code>curl -F 'upload_token=1234567890' -F 'file_name=filename.png' https://{{.}}<b>/api/file/delete</b></code><br>
 
-        <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/account/new_upload_token</b></code><br>
         <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/account/delete</b></code><br>
 
         <code>curl -F 'token=1234567890'                                    https://{{.}}<b>/api/admin/create_user</b></code><br>

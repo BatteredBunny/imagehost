@@ -63,18 +63,18 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	// Accounts for managing your user
 	accountAPI := api.Group("/account")
 	accountAPI.Use(
-		hasTokenMiddleware(),
-		app.userTokenVerificationMiddleware(),
+		app.hasSessionTokenMiddleware(),
+		app.sessionTokenVerificationMiddleware(),
 	)
 
-	accountAPI.POST("/new_upload_token", app.newUploadTokenAPI)
 	accountAPI.POST("/delete", app.accountDeleteAPI)
+	accountAPI.POST("/new_upload_token", app.newUploadTokenApi)
 	// ---
 
 	// Admin apis
 	adminAPI := api.Group("/admin")
 	adminAPI.Use(
-		hasTokenMiddleware(),
+		app.hasSessionTokenMiddleware(),
 		app.adminTokenVerificationMiddleware(),
 	)
 

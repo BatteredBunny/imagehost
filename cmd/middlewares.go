@@ -51,24 +51,31 @@ type TokenVerification struct {
 	Token string `form:"token"`
 }
 
-// Makes sure request has token and a valid one
-func hasTokenMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var (
-			form TokenVerification
-			err  error
-		)
-		if err := c.MustBindWith(&form, binding.FormPost); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			c.Abort()
-			return
-		}
+func (app *Application) parseTokenFromForm(c *gin.Context) (sessionToken uuid.UUID, err error) {
+	var form TokenVerification
+	if err = c.ShouldBindWith(&form, binding.FormPost); err != nil {
+		return
+	}
 
-		var sessionToken uuid.UUID
-		if sessionToken, err = uuid.Parse(form.Token); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"invalid session token": err.Error()})
-			c.Abort()
-			return
+	sessionToken, err = uuid.Parse(form.Token)
+
+	return
+}
+
+// Makes sure request has token and a valid one
+func (app *Application) hasSessionTokenMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sessionToken, err := app.parseTokenFromForm(c)
+		if err != nil {
+			// Fallback to checking cookie
+			log.Info().Msg("Validating cookie")
+			var loggedIn bool
+			sessionToken, _, loggedIn, _ = app.validateCookie(c)
+			if loggedIn {
+			} else {
+				c.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
 		}
 
 		c.Set("token", sessionToken)
@@ -101,7 +108,7 @@ func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
 }
 
 // Makes sure the user token provided is valid
-func (app *Application) userTokenVerificationMiddleware() gin.HandlerFunc {
+func (app *Application) sessionTokenVerificationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Verify the field exists
 		token, exists := c.Get("token")

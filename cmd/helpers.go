@@ -34,11 +34,10 @@ func (app *Application) generateFullFileName(file []byte) string {
 }
 
 func (app *Application) isValidUploadToken(uploadToken uuid.UUID) (bool, error) {
-	if _, err := app.db.idByUploadToken(uploadToken); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-
+	_, err := app.db.getAccountByUploadToken(uploadToken)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
 

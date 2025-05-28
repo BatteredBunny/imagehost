@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 func (app *Application) apiList(c *gin.Context) {
@@ -59,7 +61,14 @@ func (app *Application) userPage(c *gin.Context) {
 		}
 
 		templateInput["ImagesCount"] = count
-		templateInput["UploadToken"] = account.UploadToken
+
+		uploadTokens, err := app.db.getUploadTokens(account.ID)
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		templateInput["UploadTokens"] = uploadTokens
 	}
 
 	if loggedIn {
@@ -114,4 +123,31 @@ func (app *Application) indexFiles(c *gin.Context) {
 		log.Err(ErrUnknownStorageMethod).Msg("No storage method chosen")
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
+}
+
+func (app *Application) newUploadTokenApi(c *gin.Context) {
+	sessionToken, exists := c.Get("token")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getUserBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	var uploadToken uuid.UUID
+	if uploadToken, err = app.db.createUploadToken(account.ID); err != nil {
+		log.Err(err).Msg("Failed to create upload token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, uploadToken.String())
 }

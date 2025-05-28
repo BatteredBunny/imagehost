@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/jackc/pgx/v4"
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/jackc/pgx/v4"
 )
 
 // Api for deleting your own account
@@ -29,7 +30,7 @@ func (app *Application) accountDeleteAPI(c *gin.Context) {
 	}
 }
 
-func (app *Application) deleteAccountWithImages(userID int) (err error) {
+func (app *Application) deleteAccountWithImages(userID uint) (err error) {
 	images, err := app.db.getAllImagesFromAccount(userID)
 	if err != nil {
 		return
@@ -84,7 +85,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.deleteImageUploadToken(input.FileName, c.GetString("uploadToken")); err != nil { // Deletes file entry from database
+	if err = app.db.deleteImage(input.FileName, c.GetString("uploadToken")); err != nil { // Deletes file entry from database
 		app.logError.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

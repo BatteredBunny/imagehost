@@ -40,11 +40,12 @@ type Templates struct {
 }
 
 type Config struct {
-	DataFolder               string `toml:"data_folder"`
-	FileNameLength           int    `toml:"file_name_length"`
-	MaxUploadSize            int64  `toml:"max_upload_size"`
-	PostgresConnectionString string `toml:"postgres_connection_string"`
-	WebPort                  string `toml:"web_port"`
+	DataFolder            string `toml:"data_folder"`
+	FileNameLength        int    `toml:"file_name_length"`
+	MaxUploadSize         int64  `toml:"max_upload_size"`
+	DatabaseType          string `toml:"database_type"`
+	DatabaseConnectionUrl string `toml:"database_connection_url"`
+	WebPort               string `toml:"web_port"`
 
 	fileStorageMethod fileStorageMethod
 

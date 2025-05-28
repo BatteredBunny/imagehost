@@ -1,7 +1,8 @@
 data_folder = "./data/"
 file_name_length = 15
 max_upload_size = 104857600
-postgres_connection_string = "host=localhost port=5432 user=postgres sslmode=disable"
+database_type = "postgresql"
+database_connection_url = "host=localhost port=5432 user=postgres sslmode=disable"
 web_port = "8080"
 
 [s3]

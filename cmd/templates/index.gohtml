@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,17 +10,18 @@
     <title>Welcome to my site</title>
     <meta name="description" content="The best file host on all of interwebs">
 </head>
+
 <body>
     <div class="container">
         <div>
             <h1>epic file host</h1>
-            <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{.}}/api/upload</code>
+            <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{.}}/api/file/upload</code>
 
             <p>Files are kept for 7 days, <a href="https://github.com/BatteredBunny/imagehost">source code</a>, <a
                     href="/api_list">api list</a></p>
         </div>
 
-        <form action="/api/upload" method="POST" enctype="multipart/form-data">
+        <form action="/api/file/upload" method="POST" enctype="multipart/form-data">
             <input type="text" name="type" value="upload" hidden>
 
             <input type="text" name="upload_token" autocomplete="current-password" placeholder="Upload token">
@@ -34,4 +36,5 @@
         <img alt="Neco eating crab" class="neco" height="180" src="/public/neco_crab.gif" width="224">
     </div>
 </body>
+
 </html>

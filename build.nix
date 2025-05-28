@@ -3,7 +3,7 @@ buildGoModule {
   src = ./.;
 
   name = "imagehost";
-  vendorHash = "sha256-StYOwQKhZJjYHtTy7TkA5/ZA+yqgLIfoG/UYxl5FiMw=";
+  vendorHash = "sha256-UIhSSYzte2bt/YeQ6JZUKCBX9bmOBJ8412g7jWL/VsQ=";
 
   ldflags = [
     "-s"

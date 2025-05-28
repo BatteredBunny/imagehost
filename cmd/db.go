@@ -2,318 +2,276 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Database struct {
-	db *pgxpool.Pool
+	*gorm.DB
 }
 
-const getUserByIDQuery = `
-SELECT * FROM public.accounts WHERE id=$1;
-`
+type AccountModel struct {
+	gorm.Model
 
-func (db *Database) getUserByID(userID int) (account accountModel, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	ID          uint
+	Token       string `gorm:"type:uuid;default:uuid_generate_v4();uniqueIndex"`
+	UploadToken string `gorm:"type:uuid;default:uuid_generate_v4();uniqueIndex;column:upload_token"`
+	AccountType string
+}
 
-	err = pgxscan.Get(
-		ctx,
-		db.db,
-		&account,
-		getUserByIDQuery,
-		userID,
-	)
+type ImageModel struct {
+	gorm.Model
+
+	ID         uint
+	FileName   string
+	ExpiryDate time.Time
+
+	UploaderID uint
+	Uploader   AccountModel `gorm:"foreignKey:UploaderID"`
+}
+
+var ErrInvalidDatabaseType = errors.New("Invalid database type")
+
+func prepareDB(l *Logger, c Config) (database Database) {
+	l.logInfo.Println("Setting up database")
+
+	var err error
+	if c.DatabaseType == "postgresql" {
+		database.DB, err = gorm.Open(postgres.Open(c.DatabaseConnectionUrl), &gorm.Config{})
+		if err != nil {
+			l.logError.Fatal(err)
+		}
+	} else {
+		l.logError.Fatal(ErrInvalidDatabaseType)
+	}
+
+	// Enable UUID extension
+	if err := database.DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		l.logError.Fatal(err)
+	}
+
+	if err := database.DB.AutoMigrate(&AccountModel{}, &ImageModel{}); err != nil {
+		l.logError.Fatal(err)
+	}
+
+	// Create the first admin user if no user with ID 1 exists
+	if _, err := database.getUserByID(1); errors.Is(err, gorm.ErrRecordNotFound) {
+		var user AccountModel
+		user, err = database.createNewAdmin()
+		if err != nil {
+			l.logError.Fatal(err)
+		}
+
+		var jsonData []byte
+		if jsonData, err = json.MarshalIndent(user, "", "\t"); err != nil {
+			l.logError.Fatal(err)
+		} else {
+			l.logInfo.Println("Created first account: ", string(jsonData))
+		}
+	}
 
 	return
 }
 
-const deleteImageUploadTokenQuery = `
-DELETE FROM public.images WHERE file_name=$1 AND file_uploader=(SELECT id FROM accounts WHERE upload_token=$2);
-`
-
-func (db *Database) deleteImageUploadToken(fileName string, uploadToken string) (err error) {
+func (db *Database) getUserByID(userID int) (account AccountModel, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = db.db.Exec(
-		ctx,
-		deleteImageUploadTokenQuery,
-		&fileName,
-		&uploadToken,
-	)
+	err = db.WithContext(ctx).First(&account, userID).Error
 
 	return
 }
 
-//const deleteImageQuery = `
-//DELETE FROM public.images WHERE file_name=$1 AND file_uploader=$2;
-//`
-//
-//func (db *Database) deleteImage(fileName string, userID int) (err error) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-//	defer cancel()
-//
-//	_, err = db.db.Exec(
-//		ctx,
-//		deleteImageQuery,
-//		&fileName,
-//		&userID,
-//	)
-//
-//	return
-//}
+// Deletes image entry from database
+func (db *Database) deleteImage(fileName string, uploadToken string) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-const insertNewImageUploadTokenQuery = `
-INSERT INTO public.images (file_name, file_uploader)
-VALUES ($1, (SELECT id FROM accounts WHERE upload_token=$2));
-`
+	return db.WithContext(ctx).
+		Where(&ImageModel{FileName: fileName, Uploader: AccountModel{UploadToken: uploadToken}}).
+		Delete(&ImageModel{}).Error
+}
 
 func (db *Database) insertNewImageUploadToken(fileName string, uploadToken string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = db.db.Query(
-		ctx,
-		insertNewImageUploadTokenQuery,
-		&fileName,
-		&uploadToken,
-	)
+	// First get the user ID by upload token
+	var userID uint
+	if err = db.WithContext(ctx).Model(&AccountModel{}).
+		Select("id").
+		Where(&AccountModel{UploadToken: uploadToken}).
+		Scan(&userID).Error; err != nil {
+		return err
+	}
 
-	return
+	// Insert new image
+	return db.WithContext(ctx).Create(&ImageModel{
+		FileName:   fileName,
+		UploaderID: userID,
+	}).Error
 }
 
-//const insertNewImageQuery = `
-//INSERT INTO public.images (file_name, file_uploader) VALUES ($1, $2);
-//`
-//
-//func (db *Database) insertNewImage(fileName string, userID int) (err error) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-//	defer cancel()
-//
-//	_, err = db.db.Query(
-//		ctx,
-//		insertNewImageQuery,
-//		&fileName,
-//		&userID,
-//	)
-//
-//	return
-//}
-
-const deleteImagesFromAccountQuery = `
-DELETE FROM public.images WHERE file_uploader=$1;
-`
-
-func (db *Database) deleteImagesFromAccount(userID int) (err error) {
+func (db *Database) deleteImagesFromAccount(userID uint) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = db.db.Exec(
-		ctx,
-		deleteImagesFromAccountQuery,
-		userID,
-	)
-
-	return
+	return db.WithContext(ctx).
+		Where(&ImageModel{Uploader: AccountModel{ID: userID}}).
+		Delete(&ImageModel{}).Error
 }
 
-const deleteAccountQuery = `
-DELETE FROM public.accounts WHERE id=$1;
-`
-
-func (db *Database) deleteAccount(userID int) (err error) {
+func (db *Database) deleteAccount(userID uint) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = db.db.Exec(
-		ctx,
-		deleteAccountQuery,
-		userID,
-	)
-
-	return
+	return db.WithContext(ctx).Delete(&AccountModel{}, userID).Error
 }
 
-const getAllImagesFromAccountQuery = `
-SELECT file_name FROM public.images WHERE file_uploader=$1;
-`
-
-func (db *Database) getAllImagesFromAccount(userID int) (images []imageModel, err error) {
+func (db *Database) getAllImagesFromAccount(userID uint) (images []ImageModel, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = pgxscan.Select(
-		ctx,
-		db.db,
-		images,
-		getAllImagesFromAccountQuery,
-		userID,
-	)
+	err = db.WithContext(ctx).
+		Select("file_name").
+		Where(&ImageModel{Uploader: AccountModel{ID: userID}}).
+		Find(&images).Error
 
 	return
 }
-
-const fileExistsQuery = `
-SELECT FROM public.images WHERE file_name=$1;
-`
 
 // Looks if file exists in database
 func (db *Database) fileExists(fileName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	if err := db.db.QueryRow(ctx, fileExistsQuery, fileName).Scan(); err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return false, err
-		}
+	var count int64
+	err := db.WithContext(ctx).Model(&ImageModel{}).
+		Where(&ImageModel{FileName: fileName}).
+		Count(&count).Error
 
-		return false, nil
+	if err != nil {
+		return false, err
 	}
 
-	return true, nil
+	return count > 0, nil
 }
 
-const findIDByTokenQuery = `
-SELECT id FROM accounts WHERE token=$1;
-`
-
 // gets user id by token
-func (db *Database) idByToken(token string) (id int, err error) {
+func (db *Database) idByToken(token string) (id uint, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = db.db.QueryRow(
-		ctx,
-		findIDByTokenQuery,
-		token,
-	).Scan(&id)
+	err = db.WithContext(ctx).Model(&AccountModel{}).
+		Select("id").
+		Where(&AccountModel{Token: token}).
+		Scan(&id).Error
 
 	return
 }
-
-const findIDByUploadTokenQuery = `
-SELECT id FROM accounts WHERE upload_token=$1;
-`
 
 // gets user id by upload token
 func (db *Database) idByUploadToken(uploadToken string) (id int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = db.db.QueryRow(
-		ctx,
-		findIDByUploadTokenQuery,
-		uploadToken,
-	).Scan(&id)
+	err = db.WithContext(ctx).Model(&AccountModel{}).
+		Select("id").
+		Where(&AccountModel{UploadToken: uploadToken}).
+		Scan(&id).Error
 
 	return
 }
-
-const replaceUploadTokenQuery = `
-UPDATE accounts SET upload_token=uuid_generate_v4() WHERE token=$1 RETURNING upload_token;
-`
 
 func (db *Database) replaceUploadToken(token string) (uploadToken string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = db.db.QueryRow(
-		ctx,
-		replaceUploadTokenQuery,
-		token,
-	).Scan(&uploadToken)
+	// Update and return the new upload token
+	var account AccountModel
+	err = db.WithContext(ctx).Model(&account).
+		Where(&AccountModel{Token: token}).
+		Update("upload_token", gorm.Expr("uuid_generate_v4()")).Error
+
+	if err != nil {
+		return "", err
+	}
+
+	// Get the updated upload token
+	err = db.WithContext(ctx).Model(&AccountModel{}).
+		Select("upload_token").
+		Where("token = ?", token).
+		Scan(&uploadToken).Error
 
 	return
 }
 
-const createNewUserQuery = `
-INSERT INTO public.accounts DEFAULT values RETURNING *;
-`
-
-func (db *Database) createNewUser() (account accountModel, err error) {
+func (db *Database) createNewUser() (account AccountModel, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = pgxscan.Get(
-		ctx,
-		db.db,
-		&account,
-		createNewUserQuery,
-	)
+	account = AccountModel{
+		AccountType: "USER",
+	}
 
+	err = db.WithContext(ctx).Create(&account).Error
 	return
 }
 
-const createNewAdminQuery = `
-INSERT INTO public.accounts (account_type) VALUES ('ADMIN'::account_type) RETURNING *;
-`
-
-func (db *Database) createNewAdmin() (account accountModel, err error) {
+func (db *Database) createNewAdmin() (account AccountModel, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = pgxscan.Get(
-		ctx,
-		db.db,
-		&account,
-		createNewAdminQuery,
-	)
+	account = AccountModel{
+		AccountType: "ADMIN",
+	}
 
+	err = db.WithContext(ctx).Create(&account).Error
 	return
 }
-
-const findAdminByTokenQuery = `
-SELECT FROM accounts WHERE token=$1 AND account_type='ADMIN'::account_type;
-`
 
 func (db *Database) findAdminByToken(token string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = db.db.QueryRow(
-		ctx,
-		findAdminByTokenQuery,
-		token,
-	).Scan()
+	var count int64
+	err = db.WithContext(ctx).Model(&AccountModel{}).
+		Where(&AccountModel{Token: token, AccountType: "ADMIN"}).
+		Count(&count).Error
 
-	return
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }
 
-const findAllExpiredImagesQuery = `
-SELECT * FROM public.images WHERE created_date < NOW() - INTERVAL '7 days';
-`
-
-func (db *Database) findAllExpiredImages() (images []imageModel, err error) {
+func (db *Database) findAllExpiredImages() (images []ImageModel, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = pgxscan.Select(
-		ctx,
-		db.db,
-		&images,
-		findAllExpiredImagesQuery,
-	)
+	err = db.WithContext(ctx).
+		Where("created_date < ?", time.Now().AddDate(0, 0, -7)).
+		Find(&images).Error
 
 	return
 }
-
-const deleteAllExpiredImagesQuery = `
-DELETE FROM public.images WHERE created_date < NOW() - INTERVAL '7 days';
-`
 
 func (db *Database) deleteAllExpiredImages() (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = db.db.Exec(
-		ctx,
-		deleteAllExpiredImagesQuery,
-	)
+	err = db.WithContext(ctx).
+		Where("created_date < ?", time.Now().AddDate(0, 0, -7)).
+		Delete(&ImageModel{}).Error
 
 	return
 }

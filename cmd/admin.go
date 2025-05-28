@@ -37,7 +37,7 @@ func (app *Application) adminCreateUser(c *gin.Context) {
 
 // Admin api for deleting user
 type adminDeleteUserInput struct {
-	ID int `form:"id"`
+	ID uint `form:"id"`
 }
 
 func (app *Application) adminDeleteUser(c *gin.Context) {

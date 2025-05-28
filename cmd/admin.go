@@ -1,32 +1,29 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // Checks if the user is an admin with token
-func (app *Application) isAdmin(token uuid.UUID) (bool, error) {
-	if err := app.db.findAdminByToken(token); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-
-		return false, err
+func (app *Application) isAdmin(sessionToken uuid.UUID) (isAdmin bool, err error) {
+	account, err := app.db.getUserBySessionToken(sessionToken)
+	if err != nil {
+		return
 	}
 
-	return true, nil
+	isAdmin = account.AccountType == "ADMIN"
+
+	return
 }
 
 // Admin api for creating new user
 func (app *Application) adminCreateUser(c *gin.Context) {
-	user, err := app.db.createNewUser()
+	user, err := app.db.createAccount("ADMIN")
 	if err != nil {
 		app.logError.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)

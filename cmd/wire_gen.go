@@ -10,14 +10,12 @@ package cmd
 
 func InitializeApplication() *Application {
 	logger := setupLogging()
-	templates := setupTemplates()
 	config := initializeConfig(logger)
 	database := prepareDB(logger, config)
 	s3 := prepareStorage(logger, config)
 	limiter := setupRatelimiting(config)
 	cmdUninitializedApplication := &uninitializedApplication{
 		Logger:      logger,
-		Templates:   templates,
 		config:      config,
 		db:          database,
 		s3client:    s3,

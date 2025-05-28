@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 
@@ -12,7 +11,6 @@ import (
 
 type Application struct {
 	*Logger
-	*Templates
 	config      Config
 	db          Database
 	s3client    *s3.S3
@@ -32,11 +30,6 @@ type Logger struct {
 	logError   *log.Logger
 	logWarning *log.Logger
 	logInfo    *log.Logger
-}
-
-type Templates struct {
-	apiListTemplate *template.Template
-	indexTemplate   *template.Template
 }
 
 type Config struct {

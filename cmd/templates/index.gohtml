@@ -13,13 +13,22 @@
 
 <body>
     <div class="container">
+        {{ if .LoggedIn }}
+        <a href="/user">Account {{ .AccountID }}</a>
+        {{ end }}
+
         <div>
             <h1>epic file host</h1>
-            <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{.}}/api/file/upload</code>
+            <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
 
-            <p>Files are kept for 7 days, <a href="https://github.com/BatteredBunny/imagehost">source code</a>, <a
-                    href="/api_list">api list</a></p>
+            <p><a href="https://github.com/BatteredBunny/imagehost">source code</a>, <a href="/api_list">api list</a></p>
         </div>
+
+        {{ if .LoggedIn }}
+        <p><a href="/logout">Logout</a></p>
+        {{ else }}
+        <p><a href="/login">Login</a></p>
+        {{ end }}
 
         <form action="/api/file/upload" method="POST" enctype="multipart/form-data">
             <input type="text" name="type" value="upload" hidden>
@@ -31,6 +40,13 @@
             <br>
 
             <input type="submit" value="Upload">
+        </form>
+
+        <br>
+
+        <form action="/api/auth/register" method="GET" enctype="multipart/form-data">
+            <input type="text" name="code" placeholder="Register code">
+            <input type="submit" value="Register">
         </form>
 
         <img alt="Neco eating crab" class="neco" height="180" src="/public/neco_crab.gif" width="224">

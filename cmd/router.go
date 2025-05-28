@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"embed"
+	"html/template"
 	"time"
 
 	"github.com/didip/tollbooth/v8"
@@ -24,6 +26,9 @@ func setupRatelimiting(c Config) *limiter.Limiter {
 	return rateLimiter
 }
 
+//go:embed templates
+var TemplateFiles embed.FS
+
 func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *Application) {
 	app = (*Application)(uninitializedApp)
 	app.logInfo.Println("Setting up router")
@@ -32,12 +37,16 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	app.Router.ForwardedByClientIP = c.behindReverseProxy
 	app.Router.SetTrustedProxies([]string{c.trustedProxy})
 
+	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(TemplateFiles, "templates/*.gohtml")))
+
 	app.Router.Use(
 		app.bodySizeMiddleware(),
 	)
 
 	api := app.Router.Group("/api")
 	api.Use(app.apiMiddleware())
+
+	app.setupAuth(api)
 
 	// Apis that require the upload token, typical this token is included in scripts
 	fileAPI := api.Group("/file")
@@ -74,7 +83,11 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 
 	app.Router.GET("/api_list", app.apiList)
 	app.Router.StaticFS("/public/", PublicFiles())
+
+	app.Router.GET("/login", app.loginPage)
+	app.Router.GET("/logout", app.logoutHandler)
 	app.Router.GET("/", app.indexPage)
+	app.Router.GET("/user", app.userPage)
 	app.Router.Use(app.ratelimitMiddleware())
 	app.Router.NoRoute(app.indexFiles)
 

@@ -45,17 +45,6 @@ func (app *Application) generateFullFileName(file []byte) (name string, err erro
 	return
 }
 
-func (app *Application) isValidUserToken(token uuid.UUID) (bool, error) {
-	if _, err := app.db.idByToken(token); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return true, nil
-}
 func (app *Application) isValidUploadToken(uploadToken uuid.UUID) (bool, error) {
 	if _, err := app.db.idByUploadToken(uploadToken); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

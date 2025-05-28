@@ -1,24 +1,86 @@
 package cmd
 
 import (
-	"github.com/gin-gonic/gin"
+	"errors"
 	"net/http"
 	"path"
 	"path/filepath"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (app *Application) apiList(c *gin.Context) {
-	if err := app.apiListTemplate.Execute(c.Writer, c.Request.Host); err != nil {
-		app.logError.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
+	c.HTML(http.StatusOK, "api_list.gohtml", c.Request.Host)
 }
 
 func (app *Application) indexPage(c *gin.Context) {
-	if err := app.indexTemplate.Execute(c.Writer, c.Request.Host); err != nil {
-		app.logError.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+	templateInput := gin.H{
+		"Host": c.Request.Host,
+	}
+
+	_, account, loggedIn, err := app.validateCookie(c)
+	if errors.Is(err, ErrInvalidAuthCookie) {
+		clearAuthCookie(c)
+	} else if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if loggedIn {
+		templateInput["LoggedIn"] = true
+		templateInput["AccountID"] = account.ID
+	}
+
+	c.HTML(http.StatusOK, "index.gohtml", templateInput)
+}
+
+func (app *Application) userPage(c *gin.Context) {
+	_, account, loggedIn, err := app.validateCookie(c)
+	if errors.Is(err, ErrInvalidAuthCookie) {
+		clearAuthCookie(c)
+	} else if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	var templateInput gin.H = make(gin.H)
+
+	if loggedIn && account.GithubID > 0 {
+		templateInput["LinkedWithGithub"] = true
+		templateInput["GithubUsername"] = account.GithubUsername
+	}
+
+	if loggedIn {
+		count, err := app.db.imagesOnAccount(account.ID)
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		templateInput["ImagesCount"] = count
+		templateInput["UploadToken"] = account.UploadToken
+	}
+
+	if loggedIn {
+		c.HTML(http.StatusOK, "user.gohtml", templateInput)
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+	}
+}
+
+func (app *Application) loginPage(c *gin.Context) {
+	_, _, loggedIn, err := app.validateCookie(c)
+	if errors.Is(err, ErrInvalidAuthCookie) {
+		clearAuthCookie(c)
+	} else if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if loggedIn {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+	} else {
+		c.HTML(http.StatusOK, "login.gohtml", nil)
 	}
 }
 
@@ -39,7 +101,6 @@ func (app *Application) indexFiles(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	} else if !exists {
-		c.Redirect(http.StatusTemporaryRedirect, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 		return
 	}
 

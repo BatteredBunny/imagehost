@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
+
+	"crypto/rand"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -16,24 +18,55 @@ type Database struct {
 	*gorm.DB
 }
 
-type AccountModel struct {
+type Accounts struct {
 	gorm.Model
 
-	ID          uint      // Internal numeric account ID
-	Token       uuid.UUID `gorm:"uniqueIndex"` // Token for account or admin actions
+	ID uint `gorm:"primaryKey"` // Internal numeric account ID
+
+	// TODO: allow multiple tokens
 	UploadToken uuid.UUID `gorm:"uniqueIndex"` // Token that authorizes uploads for that account
-	AccountType string    // Either "USER" or "ADMIN"
+
+	GithubID       uint
+	GithubUsername string
+
+	AccountType string // Either "USER" or "ADMIN"
 }
 
-type ImageModel struct {
+type SessionTokens struct {
 	gorm.Model
 
-	ID         uint // Internal numeric image ID
+	ID uint `gorm:"primaryKey"`
+
+	ExpiryDate time.Time // TODO: implement
+	Token      uuid.UUID `gorm:"uniqueIndex"`
+
+	AccountID uint
+	Account   Accounts `gorm:"foreignKey:AccountID"`
+}
+
+type Images struct {
+	gorm.Model
+
+	ID uint `gorm:"primaryKey"`
+
 	FileName   string
 	ExpiryDate time.Time // Time when the image will be deleted
 
 	UploaderID uint
-	Uploader   AccountModel `gorm:"foreignKey:UploaderID"`
+	Uploader   Accounts `gorm:"foreignKey:UploaderID"`
+}
+
+type InviteCodes struct {
+	gorm.Model
+
+	ID          uint // Internal numeric image id
+	Code        string
+	Uses        uint      // How many usages of this code is left
+	ExpiryDate  time.Time // TODO: implement
+	AccountType string    // Either registers normal or admin users
+
+	InviteCreatorID uint
+	InviteCreator   Accounts `gorm:"foreignKey:InviteCreatorID"`
 }
 
 var ErrInvalidDatabaseType = errors.New("Invalid database type")
@@ -56,35 +89,135 @@ func prepareDB(l *Logger, c Config) (database Database) {
 		l.logError.Fatal(err)
 	}
 
-	if err := database.DB.AutoMigrate(&AccountModel{}, &ImageModel{}); err != nil {
+	if err := database.DB.AutoMigrate(
+		&Accounts{},
+		&Images{},
+		&InviteCodes{},
+		&SessionTokens{},
+	); err != nil {
 		l.logError.Fatal(err)
 	}
 
 	// Create the first admin user if no user with ID 1 exists
-	if _, err := database.getUserByID(1); errors.Is(err, gorm.ErrRecordNotFound) {
-		var user AccountModel
-		user, err = database.createNewAdmin()
+	userAmount, err := database.userAmount()
+	if err != nil {
+		l.logError.Fatal(err)
+	}
+	inviteCodeAmount, err := database.inviteCodeAmount()
+	if err != nil {
+		l.logError.Fatal(err)
+	}
+
+	if userAmount == 0 && inviteCodeAmount == 0 {
+		inviteCode, err := database.createInviteCode(1, "ADMIN", 0)
 		if err != nil {
 			l.logError.Fatal(err)
 		}
 
-		var jsonData []byte
-		if jsonData, err = json.MarshalIndent(user, "", "\t"); err != nil {
-			l.logError.Fatal(err)
-		} else {
-			l.logInfo.Println("Created first account: ", string(jsonData))
-		}
+		l.logWarning.Println("No accounts found, please create your account via this registration token:", inviteCode.Code)
 	}
 
 	return
 }
 
-func (db *Database) getUserByID(userID uint) (account AccountModel, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+func (db *Database) userAmount() (count int64, err error) {
+	err = db.Model(&Accounts{}).
+		Count(&count).Error
 
-	err = db.WithContext(ctx).
-		Where(&AccountModel{ID: userID}).
+	return
+}
+
+func (db *Database) findAccountByGithubID(rawID string) (account Accounts, err error) {
+	id, err := strconv.ParseUint(rawID, 10, 0)
+	if err != nil {
+		return
+	}
+
+	if err = db.Model(&Accounts{}).
+		Where(&Accounts{GithubID: uint(id)}).
+		First(&account).Error; err != nil {
+		return
+	}
+
+	return
+}
+
+func (db *Database) updateGithubUsername(accountID uint, username string) (err error) {
+	return db.Model(&Accounts{ID: accountID}).
+		Update("github_username", username).Error
+}
+
+func (db *Database) linkGithub(userID uint, username string, rawGithubID string) (err error) {
+	githubID, err := strconv.ParseUint(rawGithubID, 10, 0)
+	if err != nil {
+		return
+	}
+
+	return db.Model(&Accounts{ID: userID}).
+		Updates(map[string]interface{}{
+			"github_username": username,
+			"github_id":       uint(githubID),
+		}).Error
+}
+
+func (db *Database) deleteSession(sessionToken uuid.UUID) (err error) {
+	return db.Model(&SessionTokens{}).
+		Where(&SessionTokens{Token: sessionToken}).
+		Delete(&SessionTokens{}).Error
+}
+
+func (db *Database) inviteCodeAmount() (count int64, err error) {
+	err = db.Model(&InviteCodes{}).
+		Where("uses > 0").
+		Count(&count).Error
+
+	return
+}
+
+func (db *Database) createInviteCode(uses uint, accountType string, inviteCreatorID uint) (inviteCode InviteCodes, err error) {
+	inviteCode = InviteCodes{
+		Code:            rand.Text(),
+		Uses:            uses,
+		AccountType:     accountType,
+		InviteCreatorID: inviteCreatorID,
+	}
+
+	err = db.Create(&inviteCode).Error
+
+	return
+}
+
+func (db *Database) useCode(code string) (accountType string, err error) {
+	var inviteCode InviteCodes
+	if err = db.Model(&InviteCodes{}).
+		Where(&InviteCodes{Code: code}).
+		Where("uses > 0").
+		First(&inviteCode).Error; err != nil {
+		return
+	}
+
+	if err = db.Model(&inviteCode).
+		Update("uses", gorm.Expr("uses - 1")).Error; err != nil {
+		return
+	}
+
+	accountType = inviteCode.AccountType
+
+	return
+}
+
+func (db *Database) getUserBySessionToken(sessionToken uuid.UUID) (account Accounts, err error) {
+	// TODO: make sure token isnt expired
+
+	var accountID uint
+	if err = db.Model(&SessionTokens{}).
+		Where(&SessionTokens{Token: sessionToken}).
+		Select("account_id").
+		First(&accountID).Error; err != nil {
+		return
+	}
+
+	err = db.Model(&Accounts{ID: accountID}).
 		First(&account).Error
 
 	return
@@ -92,12 +225,9 @@ func (db *Database) getUserByID(userID uint) (account AccountModel, err error) {
 
 // Deletes image entry from database
 func (db *Database) deleteImage(fileName string, uploadToken uuid.UUID) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	return db.WithContext(ctx).
-		Where(&ImageModel{FileName: fileName, Uploader: AccountModel{UploadToken: uploadToken}}).
-		Delete(&ImageModel{}).Error
+	return db.Model(&Images{}).
+		Where(&Images{FileName: fileName, Uploader: Accounts{UploadToken: uploadToken}}).
+		Delete(&Images{}).Error
 }
 
 func (db *Database) insertNewImageUploadToken(fileName string, uploadToken uuid.UUID) (err error) {
@@ -106,16 +236,16 @@ func (db *Database) insertNewImageUploadToken(fileName string, uploadToken uuid.
 
 	// First get the user ID by upload token
 	var userID uint
-	err = db.WithContext(ctx).Model(&AccountModel{}).
+	err = db.WithContext(ctx).Model(&Accounts{}).
 		Select("id").
-		Where(&AccountModel{UploadToken: uploadToken}).
+		Where(&Accounts{UploadToken: uploadToken}).
 		First(&userID).Error
 	if err != nil {
 		return
 	}
 
 	// Insert new image
-	return db.WithContext(ctx).Create(&ImageModel{
+	return db.WithContext(ctx).Create(&Images{
 		FileName:   fileName,
 		UploaderID: userID,
 	}).Error
@@ -126,24 +256,29 @@ func (db *Database) deleteImagesFromAccount(userID uint) (err error) {
 	defer cancel()
 
 	return db.WithContext(ctx).
-		Where(&ImageModel{UploaderID: userID}).
-		Delete(&ImageModel{}).Error
+		Where(&Images{UploaderID: userID}).
+		Delete(&Images{}).Error
 }
 
 func (db *Database) deleteAccount(userID uint) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	return db.WithContext(ctx).Delete(&AccountModel{}, userID).Error
+	return db.WithContext(ctx).Delete(&Accounts{}, userID).Error
 }
 
-func (db *Database) getAllImagesFromAccount(userID uint) (images []ImageModel, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+func (db *Database) imagesOnAccount(accountID uint) (count int64, err error) {
+	err = db.Model(&Images{}).
+		Where(&Images{UploaderID: accountID}).
+		Count(&count).Error
 
-	err = db.WithContext(ctx).
+	return
+}
+
+func (db *Database) getAllImagesFromAccount(userID uint) (images []Images, err error) {
+	err = db.Model(&Images{}).
 		Select("file_name").
-		Where(&ImageModel{UploaderID: userID}).
+		Where(&Images{UploaderID: userID}).
 		Find(&images).Error
 
 	return
@@ -155,8 +290,8 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 	defer cancel()
 
 	var count int64
-	err := db.WithContext(ctx).Model(&ImageModel{}).
-		Where(&ImageModel{FileName: fileName}).
+	err := db.WithContext(ctx).Model(&Images{}).
+		Where(&Images{FileName: fileName}).
 		Count(&count).Error
 
 	if err != nil {
@@ -166,15 +301,16 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 	return count > 0, nil
 }
 
-// gets user id by token
-func (db *Database) idByToken(token uuid.UUID) (id uint, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+func (db *Database) createSessionToken(userID uint) (sessionToken uuid.UUID, err error) {
+	session := SessionTokens{
+		AccountID: userID,
+		Token:     uuid.New(),
+	}
+	if err = db.Model(&SessionTokens{}).Create(&session).Error; err != nil {
+		return
+	}
 
-	err = db.WithContext(ctx).Model(&AccountModel{}).
-		Select("id").
-		Where(&AccountModel{Token: token}).
-		Scan(&id).Error
+	sessionToken = session.Token
 
 	return
 }
@@ -184,86 +320,48 @@ func (db *Database) idByUploadToken(uploadToken uuid.UUID) (id int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	err = db.WithContext(ctx).Model(&AccountModel{}).
+	err = db.WithContext(ctx).Model(&Accounts{}).
 		Select("id").
-		Where(&AccountModel{UploadToken: uploadToken}).
-		Scan(&id).Error
+		Where(&Accounts{UploadToken: uploadToken}).
+		First(&id).Error
 
 	return
 }
 
-func (db *Database) replaceUploadToken(token uuid.UUID) (uploadToken string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	// Update and return the new upload token
-	var account AccountModel
-	err = db.WithContext(ctx).Model(&account).
-		Where(&AccountModel{Token: token}).
-		Update("upload_token", uuid.New()).Error
-
+func (db *Database) replaceUploadToken(sessionToken uuid.UUID) (uploadToken string, err error) {
+	account, err := db.getUserBySessionToken(sessionToken)
 	if err != nil {
-		return "", err
+		return
 	}
 
-	// Get the updated upload token
-	err = db.WithContext(ctx).Model(&AccountModel{}).
-		Select("upload_token").
-		Where(&AccountModel{Token: token}).
-		Scan(&uploadToken).Error
+	if err = db.Model(&account).
+		Update("upload_token", uuid.New()).Error; err != nil {
+		return
+	}
+
+	uploadToken = account.UploadToken.String()
 
 	return
 }
 
-func (db *Database) createNewUser() (account AccountModel, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+var ErrInvalidAccountType = errors.New("Invalid account type specified")
 
-	account = AccountModel{
-		AccountType: "USER",
-		Token:       uuid.New(),
-		UploadToken: uuid.New(),
+func (db *Database) createAccount(accountType string) (account Accounts, err error) {
+	if accountType == "ADMIN" || accountType == "USER" {
+		account = Accounts{
+			AccountType: accountType,
+			UploadToken: uuid.New(),
+		}
+
+		err = db.Model(&Accounts{}).Create(&account).Error
+	} else {
+		err = ErrInvalidAccountType
 	}
 
-	err = db.WithContext(ctx).Create(&account).Error
 	return
 }
 
-func (db *Database) createNewAdmin() (account AccountModel, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	account = AccountModel{
-		AccountType: "ADMIN",
-		Token:       uuid.New(),
-		UploadToken: uuid.New(),
-	}
-
-	err = db.WithContext(ctx).Create(&account).Error
-	return
-}
-
-func (db *Database) findAdminByToken(token uuid.UUID) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	var count int64
-	err = db.WithContext(ctx).Model(&AccountModel{}).
-		Where(&AccountModel{Token: token, AccountType: "ADMIN"}).
-		Count(&count).Error
-
-	if err != nil {
-		return err
-	}
-
-	if count == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
-	return nil
-}
-
-func (db *Database) findAllExpiredImages() (images []ImageModel, err error) {
+func (db *Database) findAllExpiredImages() (images []Images, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -282,7 +380,7 @@ func (db *Database) deleteAllExpiredImages() (err error) {
 	// TODO: use expiry date field
 	err = db.WithContext(ctx).
 		Where("created_date < ?", time.Now().AddDate(0, 0, -7)).
-		Delete(&ImageModel{}).Error
+		Delete(&Images{}).Error
 
 	return
 }

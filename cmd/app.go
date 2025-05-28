@@ -4,7 +4,6 @@ import (
 	"embed"
 	"errors"
 	"flag"
-	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
@@ -18,9 +17,6 @@ import (
 )
 
 var ErrUnknownStorageMethod = errors.New("unknown file storage method")
-
-//go:embed templates/*
-var templateFiles embed.FS
 
 //go:embed public/*
 var publicFiles embed.FS
@@ -97,17 +93,4 @@ func initializeConfig(l *Logger) (c Config) {
 	}
 
 	return
-}
-
-func setupTemplates() *Templates {
-	return &Templates{
-		apiListTemplate: template.Must(template.New("api_list.gohtml").ParseFS(
-			templateFiles,
-			"templates/api_list.gohtml",
-		)),
-		indexTemplate: template.Must(template.New("index.gohtml").ParseFS(
-			templateFiles,
-			"templates/index.gohtml",
-		)),
-	}
 }

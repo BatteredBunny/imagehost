@@ -13,7 +13,6 @@ func InitializeApplication() *Application {
 	panic(wire.Build(wire.NewSet(
 		setupLogging,
 		initializeConfig,
-		setupTemplates,
 		setupRatelimiting,
 		prepareDB,
 		prepareStorage,
@@ -21,7 +20,6 @@ func InitializeApplication() *Application {
 		wire.Struct(
 			new(uninitializedApplication),
 			"Logger",
-			"Templates",
 			"config",
 			"db",
 			"s3client",

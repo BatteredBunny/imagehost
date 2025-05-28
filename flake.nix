@@ -55,6 +55,7 @@
             buildInputs = with pkgs; [
               go
               wire
+              sqlite
             ];
           };
         });

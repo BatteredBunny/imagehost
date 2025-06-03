@@ -59,7 +59,7 @@ type Images struct {
 	ID uint `gorm:"primaryKey"`
 
 	FileName   string
-	ExpiryDate time.Time // Time when the image will be deleted
+	ExpiryDate time.Time `gorm:"default:null"` // Time when the image will be deleted
 
 	UploaderID uint
 	Uploader   Accounts `gorm:"foreignKey:UploaderID"`
@@ -74,7 +74,7 @@ type InviteCodes struct {
 	ExpiryDate  time.Time // TODO: implement
 	AccountType string    // Either registers normal or admin users
 
-	InviteCreatorID uint
+	InviteCreatorID uint     `gorm:"default:null"`
 	InviteCreator   Accounts `gorm:"foreignKey:InviteCreatorID"`
 }
 
@@ -260,7 +260,8 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 	return
 }
 
-func (db *Database) createImageEntry(fileName string, uploadToken uuid.UUID) (err error) {
+// Creates image entry in database, set the expiryDate to a future date when the image should be deleted
+func (db *Database) createImageEntry(fileName string, uploadToken uuid.UUID, expiryDate time.Time) (err error) {
 	account, err := db.getAccountByUploadToken(uploadToken)
 	if err != nil {
 		return
@@ -270,6 +271,7 @@ func (db *Database) createImageEntry(fileName string, uploadToken uuid.UUID) (er
 	return db.Model(&Images{}).Create(&Images{
 		FileName:   fileName,
 		UploaderID: account.ID,
+		ExpiryDate: expiryDate,
 	}).Error
 }
 
@@ -364,19 +366,18 @@ func (db *Database) createUploadToken(userID uint) (uploadToken uuid.UUID, err e
 }
 
 func (db *Database) findAllExpiredImages() (images []Images, err error) {
-
-	// TODO: use expiry date field
 	err = db.Model(&Images{}).
-		Where("created_date < ?", time.Now().AddDate(0, 0, -7)).
+		Where("expiry_date not null").
+		Where("expiry_date < ?", time.Now()).
 		Find(&images).Error
 
 	return
 }
 
 func (db *Database) deleteAllExpiredImages() (err error) {
-	// TODO: use expiry date field
 	err = db.Model(&Images{}).
-		Where("created_date < ?", time.Now().AddDate(0, 0, -7)).
+		Where("expiry_date not null").
+		Where("expiry_date < ?", time.Now()).
 		Delete(&Images{}).Error
 
 	return

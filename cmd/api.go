@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -110,8 +112,21 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 	c.String(http.StatusOK, "Successfully deleted the image")
 }
 
-// Api for uploading image
+/*
+Api for uploading image
+curl -F 'upload_token=1234567890' -F 'file=@yourfile.png'
+The expiry_date is a unix timestamp in seconds
+*/
 func (app *Application) uploadImageAPI(c *gin.Context) {
+	var expiryDate time.Time
+	timestamp, exists := c.GetPostForm("expiry_date")
+	if exists {
+		unixSecs, err := strconv.Atoi(timestamp)
+		if err == nil {
+			expiryDate = time.Unix(int64(unixSecs), 0)
+		}
+	}
+
 	fileRaw, _, err := c.Request.FormFile("file")
 	defer fileRaw.Close()
 	if err != nil {
@@ -151,8 +166,7 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	err = app.db.createImageEntry(fullFileName, uploadToken.(uuid.UUID))
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if err = app.db.createImageEntry(fullFileName, uploadToken.(uuid.UUID), expiryDate); errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {

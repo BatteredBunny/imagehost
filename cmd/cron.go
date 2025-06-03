@@ -14,7 +14,7 @@ func (app *Application) StartJobScheudler() (err error) {
 	}
 
 	if _, err = app.cron.NewJob(
-		gocron.DurationJob(time.Hour),
+		gocron.DurationJob(time.Minute*10),
 		gocron.NewTask(app.ImageCleaner),
 	); err != nil {
 		return
@@ -23,11 +23,13 @@ func (app *Application) StartJobScheudler() (err error) {
 	log.Info().Msg("Successfully setup job scheudler")
 	app.cron.Start()
 
+	go app.ImageCleaner()
+
 	return
 }
 
 func (app *Application) ImageCleaner() {
-	log.Info().Msg("Starting hourly image cleaning job")
+	log.Info().Msg("Starting image cleaning job")
 
 	images, err := app.db.findAllExpiredImages()
 	if err != nil {

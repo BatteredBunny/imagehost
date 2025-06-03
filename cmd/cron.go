@@ -37,6 +37,12 @@ func (app *Application) ImageCleaner() {
 		return
 	}
 
+	if len(images) == 0 {
+		return
+	}
+
+	log.Info().Msgf("Found %d expired images", len(images))
+
 	for _, image := range images {
 		if err = app.deleteFile(image.FileName); err != nil {
 			log.Err(err).Msg("Failed to delete image file")

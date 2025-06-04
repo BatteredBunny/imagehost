@@ -10,8 +10,6 @@ buildGoModule {
     "-w"
   ];
 
-  env.CGO_ENABLED = 0;
-
   meta = {
     description = "Simple imagehost written in Go";
     homepage = "https://github.com/BatteredBunny/imagehost";

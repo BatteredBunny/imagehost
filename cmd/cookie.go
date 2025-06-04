@@ -23,8 +23,8 @@ func clearLinkingCookie(c *gin.Context) {
 }
 
 func setAuthCookie(sessionToken uuid.UUID, c *gin.Context) {
-	// TODO: fix
-	c.SetCookie(AUTH_COOKIE, sessionToken.String(), 3600, "/", c.Request.URL.Hostname(), false, true)
+	// TODO: set secure when appropriate, use actual max age
+	c.SetCookie(AUTH_COOKIE, sessionToken.String(), 86400*7, "/", c.Request.URL.Hostname(), false, true)
 }
 
 func clearAuthCookie(c *gin.Context) {

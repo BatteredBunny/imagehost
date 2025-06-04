@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/github"
@@ -20,9 +22,21 @@ func contextWithProviderName(c *gin.Context, provider string) *http.Request {
 	return c.Request.WithContext(context.WithValue(c.Request.Context(), "provider", provider))
 }
 
+func generateSecureKey(length int) []byte {
+	key := make([]byte, length)
+	if _, err := rand.Read(key); err != nil {
+		panic(err)
+	}
+	return key
+}
+
 func (app *Application) setupGithubAuth() {
+	// TODO: this whole thing is very badly made, pls redo
+
 	githubApiKey := os.Getenv("GITHUB_CLIENT_ID")
 	githubSecret := os.Getenv("GITHUB_SECRET")
+
+	gothic.Store = sessions.NewCookieStore(generateSecureKey(32))
 
 	goth.UseProviders(
 		github.New(githubApiKey, githubSecret, fmt.Sprintf("%s/api/auth/login/github/callback", app.config.publicUrl)),

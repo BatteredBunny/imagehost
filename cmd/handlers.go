@@ -54,13 +54,25 @@ func (app *Application) userPage(c *gin.Context) {
 	}
 
 	if loggedIn {
-		count, err := app.db.imagesOnAccount(account.ID)
+		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
+
+		templateInput["InviteCodes"], err = app.db.inviteCodesByAccount(account.ID)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		templateInput["ImagesCount"] = count
+		templateInput["ImagesCount"], err = app.db.imagesAmountOnAccount(account.ID)
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		templateInput["Files"], err = app.db.getAllImagesFromAccount(account.ID)
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
 
 		uploadTokens, err := app.db.getUploadTokens(account.ID)
 		if err != nil {
@@ -150,4 +162,32 @@ func (app *Application) newUploadTokenApi(c *gin.Context) {
 	}
 
 	c.String(http.StatusOK, uploadToken.String())
+}
+
+// TOOD: allow specifying uses and if its an admin account allow creating admin invites
+func (app *Application) newInviteCodeApi(c *gin.Context) {
+	sessionToken, exists := c.Get("token")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getUserBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	inviteCode, err := app.db.createInviteCode(5, "USER", account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to create invite code")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, inviteCode.Code)
 }

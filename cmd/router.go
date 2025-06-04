@@ -69,6 +69,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 
 	accountAPI.POST("/delete", app.accountDeleteAPI)
 	accountAPI.POST("/new_upload_token", app.newUploadTokenApi)
+	accountAPI.POST("/new_invite_code", app.newInviteCodeApi)
 	// ---
 
 	// Admin apis

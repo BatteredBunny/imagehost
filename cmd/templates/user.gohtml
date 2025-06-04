@@ -22,6 +22,13 @@
         {{ end }}
 
         <p>{{ .ImagesCount }} images</p>
+        <ul>
+            {{ range .Files }}
+            <li>
+                <a href="/{{ .FileName }}">{{ .FileName }}</a>
+            </li>
+            {{ end }}
+        </ul>
 
         <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
             <input type="submit" value="Create new upload token">
@@ -31,6 +38,23 @@
         <ul>
             {{ range .UploadTokens }}
             <li><code>{{ . }}</code></li>
+            {{ end }}
+        </ul>
+
+        {{ if .IsAdmin }}
+        <form action="/api/account/new_invite_code" method="POST" enctype="multipart/form-data">
+            <input type="submit" value="Create new invite token">
+        </form>
+        {{ end }}
+
+        <p>Invite codes:</p>
+        <ul>
+            {{ range .InviteCodes }}
+            <li>
+                <div>Code <code>{{ .Code }}</code></div>
+                <div>Uses left {{ .Uses }}</div>
+                <div>Expires {{ .ExpiryDate }}</div>
+            </li>
             {{ end }}
         </ul>
     </div>

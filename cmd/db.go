@@ -46,7 +46,7 @@ type SessionTokens struct {
 
 	ID uint `gorm:"primaryKey"`
 
-	ExpiryDate time.Time // TODO: implement
+	ExpiryDate time.Time
 	Token      uuid.UUID `gorm:"uniqueIndex"`
 
 	AccountID uint
@@ -70,9 +70,9 @@ type InviteCodes struct {
 
 	ID          uint // Internal numeric image id
 	Code        string
-	Uses        uint      // How many usages of this code is left
-	ExpiryDate  time.Time // TODO: implement
-	AccountType string    // Either registers normal or admin users
+	Uses        uint // How many usages of this code is left
+	ExpiryDate  time.Time
+	AccountType string // Either registers normal or admin users
 
 	InviteCreatorID uint     `gorm:"default:null"`
 	InviteCreator   Accounts `gorm:"foreignKey:InviteCreatorID"`
@@ -109,7 +109,7 @@ func prepareDB(c Config) (database Database) {
 	}
 
 	// Create the first admin user if no user with ID 1 exists
-	userAmount, err := database.userAmount()
+	userAmount, err := database.accountAmount()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to get user amount")
 	}
@@ -130,7 +130,7 @@ func prepareDB(c Config) (database Database) {
 	return
 }
 
-func (db *Database) userAmount() (count int64, err error) {
+func (db *Database) accountAmount() (count int64, err error) {
 	err = db.Model(&Accounts{}).
 		Count(&count).Error
 
@@ -153,7 +153,8 @@ func (db *Database) findAccountByGithubID(rawID string) (account Accounts, err e
 }
 
 func (db *Database) updateGithubUsername(accountID uint, username string) (err error) {
-	return db.Model(&Accounts{ID: accountID}).
+	return db.Model(&Accounts{}).
+		Where(&Accounts{ID: accountID}).
 		Update("github_username", username).Error
 }
 
@@ -163,7 +164,8 @@ func (db *Database) linkGithub(userID uint, username string, rawGithubID string)
 		return
 	}
 
-	return db.Model(&Accounts{ID: userID}).
+	return db.Model(&Accounts{}).
+		Where(&Accounts{ID: userID}).
 		Updates(map[string]interface{}{
 			"github_username": username,
 			"github_id":       uint(githubID),
@@ -178,6 +180,7 @@ func (db *Database) deleteSession(sessionToken uuid.UUID) (err error) {
 
 func (db *Database) inviteCodeAmount() (count int64, err error) {
 	err = db.Model(&InviteCodes{}).
+		Where("expiry_date > ?", time.Now()).
 		Where("uses > 0").
 		Count(&count).Error
 
@@ -190,6 +193,7 @@ func (db *Database) createInviteCode(uses uint, accountType string, inviteCreato
 		Uses:            uses,
 		AccountType:     accountType,
 		InviteCreatorID: inviteCreatorID,
+		ExpiryDate:      time.Now().Add(time.Hour * 24 * 7), // A week from now
 	}
 
 	err = db.Create(&inviteCode).Error
@@ -201,12 +205,14 @@ func (db *Database) useCode(code string) (accountType string, err error) {
 	var inviteCode InviteCodes
 	if err = db.Model(&InviteCodes{}).
 		Where(&InviteCodes{Code: code}).
+		Where("expiry_date > ?", time.Now()).
 		Where("uses > 0").
 		First(&inviteCode).Error; err != nil {
 		return
 	}
 
-	if err = db.Model(&inviteCode).
+	if err = db.Model(&InviteCodes{}).
+		Where(&InviteCodes{ID: inviteCode.ID}).
 		Update("uses", gorm.Expr("uses - 1")).Error; err != nil {
 		return
 	}
@@ -217,17 +223,17 @@ func (db *Database) useCode(code string) (accountType string, err error) {
 }
 
 func (db *Database) getUserBySessionToken(sessionToken uuid.UUID) (account Accounts, err error) {
-	// TODO: make sure token isnt expired
-
 	var accountID uint
 	if err = db.Model(&SessionTokens{}).
 		Where(&SessionTokens{Token: sessionToken}).
+		Where("expiry_date > ?", time.Now()).
 		Select("account_id").
 		First(&accountID).Error; err != nil {
 		return
 	}
 
-	err = db.Model(&Accounts{ID: accountID}).
+	err = db.Model(&Accounts{}).
+		Where(&Accounts{ID: accountID}).
 		First(&account).Error
 
 	return
@@ -254,7 +260,8 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 		return
 	}
 
-	err = db.Model(&Accounts{ID: accountID}).
+	err = db.Model(&Accounts{}).
+		Where(&Accounts{ID: accountID}).
 		First(&account).Error
 
 	return
@@ -288,9 +295,20 @@ func (db *Database) deleteAccount(userID uint) (err error) {
 	return db.Delete(&Accounts{}, userID).Error
 }
 
-func (db *Database) imagesOnAccount(accountID uint) (count int64, err error) {
+func (db *Database) inviteCodesByAccount(accountID uint) (inviteCodes []InviteCodes, err error) {
+	err = db.Model(&InviteCodes{}).
+		Where("expiry_date > ?", time.Now()).
+		Where("uses > 0").
+		Where(&InviteCodes{InviteCreatorID: accountID}).
+		Scan(&inviteCodes).Error
+
+	return
+}
+
+func (db *Database) imagesAmountOnAccount(accountID uint) (count int64, err error) {
 	err = db.Model(&Images{}).
 		Where(&Images{UploaderID: accountID}).
+		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Count(&count).Error
 
 	return
@@ -300,6 +318,7 @@ func (db *Database) getAllImagesFromAccount(userID uint) (images []Images, err e
 	err = db.Model(&Images{}).
 		Select("file_name").
 		Where(&Images{UploaderID: userID}).
+		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Find(&images).Error
 
 	return
@@ -310,6 +329,7 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 	var count int64
 	if err := db.Model(&Images{}).
 		Where(&Images{FileName: fileName}).
+		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Count(&count).Error; err != nil {
 		return false, err
 	}
@@ -318,10 +338,14 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 }
 
 func (db *Database) createSessionToken(userID uint) (sessionToken uuid.UUID, err error) {
+	log.Debug().Msgf("Creating session token for account %d", userID)
+
 	session := SessionTokens{
-		AccountID: userID,
-		Token:     uuid.New(),
+		AccountID:  userID,
+		Token:      uuid.New(),
+		ExpiryDate: time.Now().Add(time.Hour * 24 * 7), // A week from now
 	}
+
 	if err = db.Model(&SessionTokens{}).Create(&session).Error; err != nil {
 		return
 	}
@@ -365,20 +389,28 @@ func (db *Database) createUploadToken(userID uint) (uploadToken uuid.UUID, err e
 	return
 }
 
-func (db *Database) findAllExpiredImages() (images []Images, err error) {
+func (db *Database) findExpiredImages() (images []Images, err error) {
 	err = db.Model(&Images{}).
-		Where("expiry_date not null").
-		Where("expiry_date < ?", time.Now()).
+		Where("expiry_date not null AND expiry_date < ?", time.Now()).
 		Find(&images).Error
 
 	return
 }
 
-func (db *Database) deleteAllExpiredImages() (err error) {
-	err = db.Model(&Images{}).
-		Where("expiry_date not null").
-		Where("expiry_date < ?", time.Now()).
+func (db *Database) deleteExpiredImages() (err error) {
+	return db.Model(&Images{}).
+		Where("expiry_date not null AND expiry_date < ?", time.Now()).
 		Delete(&Images{}).Error
+}
 
-	return
+func (db *Database) deleteExpiredSessionTokens() (err error) {
+	return db.Model(&SessionTokens{}).
+		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Delete(&SessionTokens{}).Error
+}
+
+func (db *Database) deleteExpiredInviteCodes() (err error) {
+	return db.Model(&InviteCodes{}).
+		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Delete(&InviteCodes{}).Error
 }

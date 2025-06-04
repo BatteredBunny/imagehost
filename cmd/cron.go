@@ -15,7 +15,7 @@ func (app *Application) StartJobScheudler() (err error) {
 
 	if _, err = app.cron.NewJob(
 		gocron.DurationJob(time.Minute*10),
-		gocron.NewTask(app.ImageCleaner),
+		gocron.NewTask(app.CleanUpJob),
 	); err != nil {
 		return
 	}
@@ -23,15 +23,25 @@ func (app *Application) StartJobScheudler() (err error) {
 	log.Info().Msg("Successfully setup job scheudler")
 	app.cron.Start()
 
-	go app.ImageCleaner()
+	go app.CleanUpJob()
 
 	return
 }
 
-func (app *Application) ImageCleaner() {
-	log.Info().Msg("Starting image cleaning job")
+func (app *Application) CleanUpJob() {
+	log.Info().Msg("Starting clean up job")
 
-	images, err := app.db.findAllExpiredImages()
+	log.Info().Msg("Starting cleaning up expired tokens")
+	if err := app.db.deleteExpiredSessionTokens(); err != nil {
+		log.Err(err).Msg("Failed to delete expired session tokens")
+	}
+
+	log.Info().Msg("Starting cleaning up invite tokens")
+	if err := app.db.deleteExpiredInviteCodes(); err != nil {
+		log.Err(err).Msg("Failed to delete expired invite codes")
+	}
+
+	images, err := app.db.findExpiredImages()
 	if err != nil {
 		log.Err(err).Msg("Failed to find expired images")
 		return
@@ -49,7 +59,7 @@ func (app *Application) ImageCleaner() {
 		}
 	}
 
-	if err = app.db.deleteAllExpiredImages(); err != nil {
+	if err = app.db.deleteExpiredImages(); err != nil {
 		log.Err(err).Msg("Failed to delete image entries in database")
 		return
 	}

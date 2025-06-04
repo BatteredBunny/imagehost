@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -23,9 +24,8 @@ func (app *Application) setupGithubAuth() {
 	githubApiKey := os.Getenv("GITHUB_CLIENT_ID")
 	githubSecret := os.Getenv("GITHUB_SECRET")
 
-	// TODO: use public URL here
 	goth.UseProviders(
-		github.New(githubApiKey, githubSecret, "http://localhost:8081/api/auth/login/github/callback"),
+		github.New(githubApiKey, githubSecret, fmt.Sprintf("%s/api/auth/login/github/callback", app.config.publicUrl)),
 	)
 }
 
@@ -108,7 +108,6 @@ func (app *Application) linkApi(c *gin.Context) {
 	provider := c.Param("provider")
 	c.Request = contextWithProviderName(c, provider)
 
-	// TODO: make sure user is not linked already
 	_, account, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		clearAuthCookie(c)

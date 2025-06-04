@@ -25,7 +25,10 @@
         <ul>
             {{ range .Files }}
             <li>
-                <a href="/{{ .FileName }}">{{ .FileName }}</a>
+                <div>
+                    <a href="/{{ .FileName }}">{{ .FileName }}</a>
+                    <span>Expires {{ .ExpiryDate }}</span>
+                </div>
             </li>
             {{ end }}
         </ul>

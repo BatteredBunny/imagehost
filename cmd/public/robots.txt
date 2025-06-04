@@ -1,3 +1,2 @@
 User-agent: *
 Allow: /
-Allow: /api_list

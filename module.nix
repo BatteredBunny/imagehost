@@ -27,9 +27,10 @@ in
         default = 8872;
       };
 
-      database_type = lib.mkOption {
+      database_type = lib.mkOption { # TODO: make this an enum
         type = lib.types.str;
         default = "postgresql";
+        example = "sqlite";
         description = "Database type";
       };
 
@@ -54,13 +55,22 @@ in
       behind_reverse_proxy = lib.mkOption {
         type = lib.types.bool;
         default = false;
+        example = true;
         description = "Allows using trusted proxy settings";
       };
 
       trusted_proxy = lib.mkOption {
         type = lib.types.str;
         default = "";
+        example = "127.0.0.1";
         description = "Which proxy to trust for IP information";
+      };
+
+      public_url = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        example = "https://cdn.example.com";
+        description = "Public url that its hosted on";
       };
 
       # s3 = {

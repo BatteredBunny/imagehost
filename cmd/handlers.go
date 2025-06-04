@@ -12,10 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func (app *Application) apiList(c *gin.Context) {
-	c.HTML(http.StatusOK, "api_list.gohtml", c.Request.Host)
-}
-
 func (app *Application) indexPage(c *gin.Context) {
 	templateInput := gin.H{
 		"Host": c.Request.Host,

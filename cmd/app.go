@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"flag"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -80,6 +81,11 @@ func initializeConfig() (c Config) {
 		c.fileStorageMethod = fileStorageS3
 	} else {
 		c.fileStorageMethod = fileStorageLocal
+	}
+
+	if c.publicUrl == "" {
+		log.Warn().Msg("Warning no public_url option set in toml, github login might not work")
+		c.publicUrl = fmt.Sprintf("http://localhost:%s", c.Port)
 	}
 
 	return

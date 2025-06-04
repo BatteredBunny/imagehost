@@ -36,6 +36,7 @@ type Config struct {
 
 	behindReverseProxy bool   `toml:"behind_reverse_proxy"`
 	trustedProxy       string `toml:"trusted_proxy"`
+	publicUrl          string `toml:"public_url"` // URL to use for github callback
 
 	fileStorageMethod fileStorageMethod
 	S3                s3Config `toml:"s3"`

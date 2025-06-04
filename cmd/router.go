@@ -83,7 +83,6 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	adminAPI.POST("/delete_user", app.adminDeleteUser)
 	// ---
 
-	app.Router.GET("/api_list", app.apiList)
 	app.Router.StaticFS("/public/", PublicFiles())
 
 	app.Router.GET("/login", app.loginPage)

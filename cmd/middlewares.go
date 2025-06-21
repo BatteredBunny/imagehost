@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/didip/tollbooth/v8"
@@ -73,7 +74,7 @@ func (app *Application) hasSessionTokenMiddleware() gin.HandlerFunc {
 			sessionToken, _, loggedIn, _ = app.validateCookie(c)
 			if loggedIn {
 			} else {
-				c.AbortWithError(http.StatusBadRequest, err)
+				c.AbortWithError(http.StatusUnauthorized, err)
 				return
 			}
 		}
@@ -113,7 +114,7 @@ func (app *Application) sessionTokenVerificationMiddleware() gin.HandlerFunc {
 		// Verify the field exists
 		token, exists := c.Get("token")
 		if !exists {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
@@ -122,7 +123,7 @@ func (app *Application) sessionTokenVerificationMiddleware() gin.HandlerFunc {
 			return
 		} else if err != nil {
 			log.Err(err).Msg("Failed to find user by session token")
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
@@ -143,14 +144,21 @@ func hasUploadTokenMiddleware() gin.HandlerFunc {
 		)
 
 		if err = c.MustBindWith(&form, binding.FormPost); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if form.UploadToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "upload token is required"})
 			c.Abort()
 			return
 		}
 
 		var uploadToken uuid.UUID
 		if uploadToken, err = uuid.Parse(form.UploadToken); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"invalid upload token": err.Error()})
+			var errStr = fmt.Sprintf("invalid upload token: %s", err.Error())
+			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
 			c.Abort()
 			return
 		}
@@ -165,7 +173,7 @@ func (app *Application) uploadTokenVerificationMiddleware() gin.HandlerFunc {
 		// Verify the field exists
 		uploadToken, exists := c.Get("uploadToken")
 		if !exists {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 

@@ -19,7 +19,7 @@ func (app *Application) indexPage(c *gin.Context) {
 
 	_, account, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
-		clearAuthCookie(c)
+		app.clearAuthCookie(c)
 	} else if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -36,7 +36,7 @@ func (app *Application) indexPage(c *gin.Context) {
 func (app *Application) userPage(c *gin.Context) {
 	_, account, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
-		clearAuthCookie(c)
+		app.clearAuthCookie(c)
 	} else if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -89,7 +89,7 @@ func (app *Application) userPage(c *gin.Context) {
 func (app *Application) loginPage(c *gin.Context) {
 	_, _, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
-		clearAuthCookie(c)
+		app.clearAuthCookie(c)
 	} else if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -119,6 +119,7 @@ func (app *Application) indexFiles(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	} else if !exists {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
 

@@ -78,13 +78,13 @@ func (app *Application) loginCallback(c *gin.Context) {
 	if _, err := c.Cookie("linking"); err == nil {
 		_, account, loggedIn, err := app.validateCookie(c)
 		if errors.Is(err, ErrInvalidAuthCookie) {
-			clearAuthCookie(c)
+			app.clearAuthCookie(c)
 		} else if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		clearLinkingCookie(c)
+		app.clearLinkingCookie(c)
 
 		if loggedIn && account.GithubID == 0 {
 			if err := app.db.linkGithub(account.ID, user.NickName, user.UserID); err != nil {
@@ -113,7 +113,7 @@ func (app *Application) loginCallback(c *gin.Context) {
 			return
 		}
 
-		setAuthCookie(sessionToken, c)
+		app.setAuthCookie(sessionToken, c)
 		c.Redirect(http.StatusTemporaryRedirect, "/user")
 	}
 }
@@ -124,7 +124,7 @@ func (app *Application) linkApi(c *gin.Context) {
 
 	_, account, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
-		clearAuthCookie(c)
+		app.clearAuthCookie(c)
 		return
 	} else if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -139,7 +139,7 @@ func (app *Application) linkApi(c *gin.Context) {
 	if _, err := gothic.CompleteUserAuth(c.Writer, c.Request); err == nil {
 		c.JSON(http.StatusOK, "linked")
 	} else {
-		setLinkingCookie(c)
+		app.setLinkingCookie(c)
 
 		gothic.BeginAuthHandler(c.Writer, c.Request)
 	}
@@ -179,7 +179,7 @@ func (app *Application) registerApi(c *gin.Context) {
 		return
 	}
 
-	setAuthCookie(token, c)
+	app.setAuthCookie(token, c)
 	c.Redirect(http.StatusTemporaryRedirect, "/user")
 }
 
@@ -187,7 +187,7 @@ func (app *Application) logoutHandler(c *gin.Context) {
 	sessionToken, _, loggedIn, err := app.validateCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
-		clearAuthCookie(c)
+		app.clearAuthCookie(c)
 		return
 	} else if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -203,7 +203,7 @@ func (app *Application) logoutHandler(c *gin.Context) {
 		log.Err(err).Msg("Failed to delete session from db")
 	}
 
-	clearAuthCookie(c)
+	app.clearAuthCookie(c)
 
 	gothic.Logout(c.Writer, c.Request)
 

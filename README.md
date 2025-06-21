@@ -1,28 +1,31 @@
-# Imagehost
+<h1 align="center">Imagehost</h1>
 
-The program has only one flag, -c, which specifies config file used. All other settings are in the config file.
+Simple imagehost written in Golang
 
-## Docker
+Main page             |  Account page
+:-------------------------:|:-------------------------:
+![CleanShot 2025-06-21 at 20 49 35@2x](https://github.com/user-attachments/assets/990a1be7-84a7-4df1-9fe8-067807580b28)  |  ![CleanShot 2025-06-21 at 20 49 07@2x](https://github.com/user-attachments/assets/a571c9f0-1aa2-477f-962c-627b6e900a94)
 
-Use example_docker.toml
+# Features
+- Easy social login via github
+- Account invite codes for enrolling new users
+- Image automatic deletion
+- Seperate upload codes for automation setups (e.g scripts)
+- Store data locally or on a S3/B2 bucket
+- Sqlite and postgresql support
 
-## Without docker
+# Usage
 
-Use example_local.toml
+Deploy the service with either the nixos module or docker-compose then configure the service.
 
-## S3/B2 bucket
+Have a look at the example configs in ``examples/``
 
-Look in example_s3.toml for what settings to add to your config.
+# Config reference
 
-# Dev setup with docker
+TODO
 
-Uncomment ``./example_docker.toml:/app/config.toml`` in docker-compose.yml
-
-Run ``docker compose up --build`` and then visit http://localhost:8080/
-
-Thats it!
-
-# Basic nixos setup
+# Setup
+## Setup with nixos module
 
 ```nix
 inputs = {
@@ -42,4 +45,19 @@ services = {
 
     postgresql.enable = true;
 };
+```
+
+## Setup with docker
+
+Have a look at docker-compose.yml
+
+# Development
+
+## Dev setup with docker
+
+Theres a docker-compose.yml config for setting up the service with postgresql
+
+```
+docker compose up --build
+# Then visit http://localhost:8080
 ```

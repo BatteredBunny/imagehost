@@ -1,0 +1,15 @@
+<div id="topbar">
+    <div class="left">
+        <a href="/">Home</a>
+        {{ if .LoggedIn }}
+        <a href="/user">Account {{ .AccountID }}</a>
+        <a href="/logout">Logout</a>
+        {{ else }}
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        {{ end }}
+    </div>
+    <div class="right">
+        <a href="https://github.com/BatteredBunny/imagehost">Code</a>
+    </div>
+</div>

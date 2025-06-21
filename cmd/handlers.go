@@ -50,6 +50,10 @@ func (app *Application) userPage(c *gin.Context) {
 	}
 
 	if loggedIn {
+		// For top bar
+		templateInput["LoggedIn"] = true
+		templateInput["AccountID"] = account.ID
+
 		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
 
 		templateInput["InviteCodes"], err = app.db.inviteCodesByAccount(account.ID)
@@ -96,9 +100,25 @@ func (app *Application) loginPage(c *gin.Context) {
 	}
 
 	if loggedIn {
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		c.Redirect(http.StatusTemporaryRedirect, "/user")
 	} else {
 		c.HTML(http.StatusOK, "login.gohtml", nil)
+	}
+}
+
+func (app *Application) registerPage(c *gin.Context) {
+	_, _, loggedIn, err := app.validateCookie(c)
+	if errors.Is(err, ErrInvalidAuthCookie) {
+		app.clearAuthCookie(c)
+	} else if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if loggedIn {
+		c.Redirect(http.StatusTemporaryRedirect, "/user")
+	} else {
+		c.HTML(http.StatusOK, "register.gohtml", nil)
 	}
 }
 

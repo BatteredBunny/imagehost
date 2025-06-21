@@ -7,29 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/public/style.css">
     <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
-    <title>Welcome to my site</title>
+    <title>File host</title>
     <meta name="description" content="The best file host on all of interwebs">
 </head>
 
 <body>
+    <div id="mascot">
+        <img alt="Neco eating crab" height="180" width="224" src="/public/neco_crab.gif">
+    </div>
+
+    {{ template "topbar.gohtml" . }}
+
     <div class="container">
-        {{ if .LoggedIn }}
-        <a href="/user">Account {{ .AccountID }}</a>
-        {{ end }}
-
         <div>
-            <h1>epic file host</h1>
+            <h1>File host</h1>
             <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
-
-            <p><a href="https://github.com/BatteredBunny/imagehost">source code</a></p>
         </div>
 
-        {{ if .LoggedIn }}
-        <p><a href="/logout">Logout</a></p>
-        {{ else }}
-        <p><a href="/login">Login</a></p>
-        {{ end }}
-
+        <h2>Upload</h2>
         <form action="/api/file/upload" method="POST" enctype="multipart/form-data">
             <input type="text" name="type" value="upload" hidden>
 
@@ -41,15 +36,6 @@
 
             <input type="submit" value="Upload">
         </form>
-
-        <br>
-
-        <form action="/api/auth/register" method="GET" enctype="multipart/form-data">
-            <input type="text" name="code" placeholder="Register code">
-            <input type="submit" value="Register">
-        </form>
-
-        <img alt="Neco eating crab" class="neco" height="180" src="/public/neco_crab.gif" width="224">
     </div>
 </body>
 

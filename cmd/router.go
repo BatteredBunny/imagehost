@@ -30,6 +30,13 @@ func setupRatelimiting(c Config) *limiter.Limiter {
 //go:embed templates
 var TemplateFiles embed.FS
 
+func formatTimeDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("2006-01-02 15:04:05")
+}
+
 func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *Application) {
 	app = (*Application)(uninitializedApp)
 	log.Info().Msg("Setting up router")
@@ -38,7 +45,10 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	app.Router.ForwardedByClientIP = c.behindReverseProxy
 	app.Router.SetTrustedProxies([]string{c.trustedProxy})
 
-	app.Router.SetHTMLTemplate(template.Must(template.ParseFS(TemplateFiles, "templates/*.gohtml")))
+	templates := template.Must(template.New("").Funcs(template.FuncMap{
+		"formatTimeDate": formatTimeDate,
+	}).ParseFS(TemplateFiles, "templates/*.gohtml", "templates/components/*.gohtml"))
+	app.Router.SetHTMLTemplate(templates)
 
 	app.Router.Use(
 		app.bodySizeMiddleware(),
@@ -86,9 +96,10 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	app.Router.StaticFS("/public/", PublicFiles())
 
 	app.Router.GET("/login", app.loginPage)
+	app.Router.GET("/register", app.registerPage)
 	app.Router.GET("/logout", app.logoutHandler)
-	app.Router.GET("/", app.indexPage)
 	app.Router.GET("/user", app.userPage)
+	app.Router.GET("/", app.indexPage)
 	app.Router.Use(app.ratelimitMiddleware())
 	app.Router.NoRoute(app.indexFiles)
 

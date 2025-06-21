@@ -8,58 +8,78 @@
     <link rel="stylesheet" href="/public/style.css">
     <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
     <title>User</title>
+    <meta name="description" content="The best file host on all of interwebs">
 </head>
 
 <body>
+    {{ template "topbar.gohtml" . }}
+
     <div class="container">
-        <p><a href="/">Home</a></p>
-
         <h1>User</h1>
-        {{ if .LinkedWithGithub }}
-        <p>Linked with github {{ .GithubUsername }}</p>
-        {{ else }}
-        <p><a href="/api/auth/link/github">Link with github</a></p>
-        {{ end }}
 
-        <p>{{ .ImagesCount }} images</p>
-        <ul>
-            {{ range .Files }}
-            <li>
-                <div>
-                    <a href="/{{ .FileName }}">{{ .FileName }}</a>
-                    <span>Expires {{ .ExpiryDate }}</span>
+        <div id="social-login" class="setting-group">
+            <h2>Social login</h2>
+
+            {{ if .LinkedWithGithub }}
+            <p>Linked with github {{ .GithubUsername }}</p>
+            {{ else }}
+            <p><a href="/api/auth/link/github">Link with github</a></p>
+            {{ end }}
+        </div>
+
+        <div id="images" class="setting-group">
+            <h2>Files</h2>
+            <p>{{ .ImagesCount }} files uploaded</p>
+            <div class="image-grid">
+                {{ range .Files }}
+                <div class="image">
+                    <code><img width="100" src="/{{ .FileName }}" alt="{{ .FileName }}"></code>
+                    {{ if formatTimeDate .ExpiryDate }}
+                        <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                    {{ end }}
                 </div>
-            </li>
-            {{ end }}
-        </ul>
+                {{ end }}
+            </div>
+        </div>
 
-        <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
-            <input type="submit" value="Create new upload token">
-        </form>
+        <div id="upload-tokens" class="setting-group">
+            <h2>Upload tokens</h2>
 
-        <p>Upload tokens:</p>
-        <ul>
-            {{ range .UploadTokens }}
-            <li><code>{{ . }}</code></li>
-            {{ end }}
-        </ul>
+            <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
+                <input type="submit" value="Create upload token">
+            </form>
+
+            <ul>
+                {{ range .UploadTokens }}
+                <li><code>{{ . }}</code></li>
+                {{ end }}
+            </ul>
+        </div>
+
+        <div id="invite-codes" class="setting-group">
+            <h2>Invite codes</h2>
+            <div class="codes">
+                {{ range .InviteCodes }}
+                <div class="code">
+                    <code class="code-text">{{ .Code }}</code>
+                    <div class="info">
+                        <div>Uses left {{ .Uses }}</div>
+                        <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
 
         {{ if .IsAdmin }}
-        <form action="/api/account/new_invite_code" method="POST" enctype="multipart/form-data">
-            <input type="submit" value="Create new invite token">
-        </form>
-        {{ end }}
+        <div id="admin-panel" class="setting-group">
+            <h2>Admin actions</h2>
 
-        <p>Invite codes:</p>
-        <ul>
-            {{ range .InviteCodes }}
-            <li>
-                <div>Code <code>{{ .Code }}</code></div>
-                <div>Uses left {{ .Uses }}</div>
-                <div>Expires {{ .ExpiryDate }}</div>
-            </li>
-            {{ end }}
-        </ul>
+            <form action="/api/account/new_invite_code" method="POST" enctype="multipart/form-data">
+                <input type="submit" value="Create invite token">
+            </form>
+        </div>
+        {{ end }}
     </div>
 </body>
 

@@ -158,7 +158,7 @@ func (app *Application) registerApi(c *gin.Context) {
 		return
 	}
 
-	accountType, err := app.db.useCode(input.Code)
+	accountType, invitedBy, err := app.db.useCode(input.Code)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.String(http.StatusBadRequest, "Invalid code")
 		return
@@ -167,7 +167,7 @@ func (app *Application) registerApi(c *gin.Context) {
 		return
 	}
 
-	acc, err := app.db.createAccount(accountType)
+	acc, err := app.db.createAccount(accountType, invitedBy)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to create account")
 		return

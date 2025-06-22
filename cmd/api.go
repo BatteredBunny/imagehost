@@ -34,14 +34,28 @@ func (app *Application) accountDeleteAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.deleteAccountWithImages(account.ID); err != nil {
+	if err = app.deleteAccount(account.ID); err != nil {
 		log.Err(err).Msg("Failed to delete own account")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
+	c.String(http.StatusOK, "Account deleted successfully")
 }
 
-func (app *Application) deleteAccountWithImages(userID uint) (err error) {
+func (app *Application) deleteAccount(userID uint) (err error) {
+	if err = app.db.deleteSessionTokensFromAccount(userID); err != nil {
+		return
+	}
+
+	if err = app.db.deleteUploadTokensFromAccount(userID); err != nil {
+		return
+	}
+
+	if err = app.db.deleteInviteCodesFromAccount(userID); err != nil {
+		return
+	}
+
 	images, err := app.db.getAllImagesFromAccount(userID)
 	if err != nil {
 		return

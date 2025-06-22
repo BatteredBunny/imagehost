@@ -39,18 +39,20 @@ type AccountStats struct {
 	Accounts
 	SpaceUsed     int64
 	FilesUploaded int64
+	You           bool
 }
 
-func (app *Application) toAccountStats(account *Accounts) (stats AccountStats, err error) {
+func (app *Application) toAccountStats(account *Accounts, requesterAccountID uint) (stats AccountStats, err error) {
 	images, err := app.db.getAllImagesFromAccount(account.ID)
 	if err != nil {
 		return
 	}
 
 	stats = AccountStats{
-		*account,
-		0,
-		0,
+		Accounts:      *account,
+		SpaceUsed:     0,
+		FilesUploaded: 0,
+		You:           account.ID == requesterAccountID,
 	}
 
 	for _, image := range images {
@@ -95,7 +97,7 @@ func (app *Application) adminPage(c *gin.Context) {
 
 		var stats []AccountStats
 		for _, user := range users {
-			stat, err := app.toAccountStats(&user)
+			stat, err := app.toAccountStats(&user, account.ID)
 			if err != nil {
 				c.AbortWithStatus(http.StatusInternalServerError)
 				return
@@ -290,4 +292,41 @@ func (app *Application) newInviteCodeApi(c *gin.Context) {
 	}
 
 	c.String(http.StatusOK, inviteCode.Code)
+}
+
+func (app *Application) deleteImagesAPI(c *gin.Context) {
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	images, err := app.db.getAllImagesFromAccount(account.ID)
+	if err != nil {
+		return
+	}
+
+	for _, image := range images {
+		if err = app.deleteFile(image.FileName); err != nil {
+			log.Err(err).Msg("Failed to delete image")
+		}
+	}
+
+	if err := app.db.deleteImagesFromAccount(account.ID); err != nil {
+		log.Err(err).Msg("Failed to delete images")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, "Images deleted")
 }

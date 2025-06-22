@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"strconv"
 	"time"
@@ -26,6 +25,8 @@ type Accounts struct {
 
 	GithubID       uint
 	GithubUsername string
+
+	InvitedBy uint // Account ID of the user who invited this account
 
 	AccountType string // Either "USER" or "ADMIN"
 }
@@ -205,7 +206,7 @@ func (db *Database) createInviteCode(uses uint, accountType string, inviteCreato
 	return
 }
 
-func (db *Database) useCode(code string) (accountType string, err error) {
+func (db *Database) useCode(code string) (accountType string, invitedBy uint, err error) {
 	var inviteCode InviteCodes
 	if err = db.Model(&InviteCodes{}).
 		Where(&InviteCodes{Code: code}).
@@ -222,6 +223,7 @@ func (db *Database) useCode(code string) (accountType string, err error) {
 	}
 
 	accountType = inviteCode.AccountType
+	invitedBy = inviteCode.InviteCreatorID
 
 	return
 }
@@ -314,15 +316,24 @@ func (db *Database) createImageEntry(input CreateImageEntryInput) (err error) {
 	return db.Model(&Images{}).Create(&input.image).Error
 }
 
+// Only deletes database entry, actual file has to be deleted as well
 func (db *Database) deleteImagesFromAccount(userID uint) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	return db.WithContext(ctx).
-		Where(&Images{UploaderID: userID}).
-		Delete(&Images{}).Error
+	return db.Where(&Images{UploaderID: userID}).Delete(&Images{}).Error
 }
 
+func (db *Database) deleteSessionTokensFromAccount(userID uint) (err error) {
+	return db.Where(&SessionTokens{AccountID: userID}).Delete(&SessionTokens{}).Error
+}
+
+func (db *Database) deleteUploadTokensFromAccount(userID uint) (err error) {
+	return db.Where(&UploadTokens{AccountID: userID}).Delete(&UploadTokens{}).Error
+}
+
+func (db *Database) deleteInviteCodesFromAccount(userID uint) (err error) {
+	return db.Where(&InviteCodes{InviteCreatorID: userID}).Delete(&InviteCodes{}).Error
+}
+
+// Deletes account entry only
 func (db *Database) deleteAccount(userID uint) (err error) {
 	return db.Delete(&Accounts{}, userID).Error
 }
@@ -395,10 +406,11 @@ func (db *Database) createSessionToken(userID uint) (sessionToken uuid.UUID, err
 
 var ErrInvalidAccountType = errors.New("Invalid account type specified")
 
-func (db *Database) createAccount(accountType string) (account Accounts, err error) {
+func (db *Database) createAccount(accountType string, invitedBy uint) (account Accounts, err error) {
 	if accountType == "ADMIN" || accountType == "USER" {
 		account = Accounts{
 			AccountType: accountType,
+			InvitedBy:   invitedBy,
 		}
 
 		err = db.Model(&Accounts{}).Create(&account).Error

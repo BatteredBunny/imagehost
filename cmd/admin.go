@@ -9,34 +9,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Admin api for creating new user
-func (app *Application) adminCreateUser(c *gin.Context) {
-	user, err := app.db.createAccount("ADMIN")
-	if err != nil {
-		log.Err(err).Msg("Failed to create admin account")
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.JSON(http.StatusOK, user)
-}
-
 // Admin api for deleting user
 type adminDeleteUserInput struct {
 	ID uint `form:"id"`
 }
 
 func (app *Application) adminDeleteUser(c *gin.Context) {
+	// TODO: disallow deleting your own account with this
 	var input adminDeleteUserInput
 	var err error
 
 	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		c.Abort()
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if err = app.deleteAccountWithImages(input.ID); err != nil {
+	if err = app.deleteAccount(input.ID); err != nil {
 		log.Err(err).Msg("Failed to delete account")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

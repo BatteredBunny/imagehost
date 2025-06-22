@@ -197,6 +197,8 @@ code {
 #users-panel {
     .users-grid {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 10px;
 
         .user-card {
@@ -204,5 +206,13 @@ code {
             border-radius: 5px;
             padding: 10px;
         }
+    }
+}
+
+#account-settings {
+    .account-settings-button-row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
     }
 }

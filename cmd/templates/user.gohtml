@@ -104,6 +104,18 @@
             </form>
         </div>
         {{ end }}
+
+        <div id="account-settings" class="setting-group">
+            <h2>Account</h2>
+            <div class="account-settings-button-row">
+                <form action="/api/account/delete" method="POST" enctype="multipart/form-data">
+                    <input type="submit" value="Delete my account">
+                </form>
+                <form action="/api/account/delete_images" method="POST" enctype="multipart/form-data">
+                    <input type="submit" value="Delete all images">
+                </form>
+            </div>
+        </div>
     </div>
 </body>
 

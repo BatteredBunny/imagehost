@@ -71,9 +71,10 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 		app.isSessionAuthenticated(),
 	)
 
-	accountAPI.Any("/delete", app.accountDeleteAPI)
-	accountAPI.Any("/new_upload_token", app.newUploadTokenApi)
-	accountAPI.Any("/new_invite_code", app.newInviteCodeApi)
+	accountAPI.POST("/delete", app.accountDeleteAPI)
+	accountAPI.POST("/new_upload_token", app.newUploadTokenApi)
+	accountAPI.POST("/new_invite_code", app.newInviteCodeApi)
+	accountAPI.POST("/delete_images", app.deleteImagesAPI)
 	// ---
 
 	// Admin apis
@@ -83,8 +84,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 		app.isAdmin(),
 	)
 
-	adminAPI.Any("/create_user", app.adminCreateUser)
-	adminAPI.Any("/delete_user", app.adminDeleteUser)
+	adminAPI.POST("/delete_user", app.adminDeleteUser)
 
 	app.Router.StaticFS("/public/", PublicFiles())
 

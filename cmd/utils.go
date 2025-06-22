@@ -25,3 +25,11 @@ func mimeIsImage(mimeType string) bool {
 func mimeIsVideo(mimeType string) bool {
 	return strings.HasPrefix(mimeType, "video/")
 }
+
+func Sum[T any](slice []T, getValue func(T) int) int {
+	sum := 0
+	for _, item := range slice {
+		sum += getValue(item)
+	}
+	return sum
+}

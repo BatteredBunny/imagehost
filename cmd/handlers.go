@@ -136,23 +136,26 @@ func (app *Application) userPage(c *gin.Context) {
 		templateInput["AccountID"] = account.ID
 		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
 
+		templateInput["UnlinkedAccount"] = account.GithubID == 0
+
 		templateInput["InviteCodes"], err = app.db.inviteCodesByAccount(account.ID)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		templateInput["ImagesCount"], err = app.db.imagesAmountOnAccount(account.ID)
+		var images []Images
+		images, err = app.db.getAllImagesFromAccount(account.ID)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		templateInput["Files"], err = app.db.getAllImagesFromAccount(account.ID)
-		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
+		templateInput["Files"] = images
+		templateInput["ImagesCount"] = len(images)
+		templateInput["ImagesSize"] = Sum(images, func(image Images) int {
+			return int(image.FileSize)
+		})
 
 		uploadTokens, err := app.db.getUploadTokens(account.ID)
 		if err != nil {

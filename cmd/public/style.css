@@ -26,6 +26,10 @@ body {
 
     --alternative-bg-color: #e0e0e0;
     --alternative-text-color: black;
+
+    --warning-bg-color: #ffcccc;
+    --warning-border-color: #ff0000;
+    --warning-text-color: #ff0000;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +43,10 @@ body {
 
         --alternative-bg-color: #444444;
         --alternative-text-color: white;
+
+        --warning-bg-color: #813737;
+        --warning-border-color: #ff0000;
+        --warning-text-color: #ff0000;
     }
 }
 
@@ -67,6 +75,13 @@ body {
     background-color: var(--menu-bg-color);
     border-radius: 10px;
     padding: 10px;
+}
+
+.warning-modal {
+    border: 2px solid var(--warning-border-color);
+    background-color: var(--warning-bg-color);
+    border-radius: 10px;
+    padding: 5px;
 }
 
 #images {

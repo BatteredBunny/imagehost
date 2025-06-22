@@ -20,6 +20,12 @@
         <div id="social-login" class="setting-group">
             <h2>Social login</h2>
 
+            {{ if .UnlinkedAccount }}
+            <div class="warning-modal">
+                <p>Link your account with at least one platform otherwise you won't be able to login after this!</p>
+            </div>
+            {{ end }}
+
             {{ if .LinkedWithGithub }}
             <p>Linked with github {{ .GithubUsername }}</p>
             {{ else }}
@@ -29,7 +35,7 @@
 
         <div id="images" class="setting-group">
             <h2>Files</h2>
-            <p>{{ .ImagesCount }} files uploaded</p>
+            <p>{{ .ImagesCount }} files uploaded, totalling {{ .ImagesSize }} bytes</p>
             <div class="image-grid">
                 {{ range .Files }}
                 <div class="image">

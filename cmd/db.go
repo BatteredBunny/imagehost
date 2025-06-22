@@ -226,7 +226,7 @@ func (db *Database) useCode(code string) (accountType string, err error) {
 	return
 }
 
-func (db *Database) getUserBySessionToken(sessionToken uuid.UUID) (account Accounts, err error) {
+func (db *Database) getAccountBySessionToken(sessionToken uuid.UUID) (account Accounts, err error) {
 	var accountID uint
 	if err = db.Model(&SessionTokens{}).
 		Where(&SessionTokens{Token: sessionToken}).
@@ -244,10 +244,21 @@ func (db *Database) getUserBySessionToken(sessionToken uuid.UUID) (account Accou
 }
 
 // Deletes image entry from database
-func (db *Database) deleteImage(fileName string, uploadToken uuid.UUID) (err error) {
-	account, err := db.getAccountByUploadToken(uploadToken)
-	if err != nil {
-		return
+func (db *Database) deleteImage(fileName string, uploadToken uuid.NullUUID, sessionToken uuid.NullUUID) (err error) {
+	var account Accounts
+	if uploadToken.Valid {
+		account, err = db.getAccountByUploadToken(uploadToken.UUID)
+		if err != nil {
+			return
+		}
+	} else if sessionToken.Valid {
+		account, err = db.getAccountBySessionToken(sessionToken.UUID)
+		if err != nil {
+			return
+		}
+	} else {
+		// This shouldnt happen but just in case
+		return ErrNotAuthenticated
 	}
 
 	return db.Model(&Images{}).
@@ -271,21 +282,36 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 	return
 }
 
-// Creates image entry in database, set the expiryDate to a future date when the image should be deleted
-func (db *Database) createImageEntry(fileName string, fileSize uint, mimeType string, uploadToken uuid.UUID, expiryDate time.Time) (err error) {
-	account, err := db.getAccountByUploadToken(uploadToken)
-	if err != nil {
-		return
+type CreateImageEntryInput struct {
+	image Images
+
+	uploadToken  uuid.NullUUID
+	sessionToken uuid.NullUUID
+}
+
+var ErrNotAuthenticated = errors.New("not authenticated")
+
+// Creates image entry in database
+func (db *Database) createImageEntry(input CreateImageEntryInput) (err error) {
+	var account Accounts
+	if input.sessionToken.Valid {
+		account, err = db.getAccountBySessionToken(input.sessionToken.UUID)
+		if err != nil {
+			return
+		}
+	} else if input.uploadToken.Valid {
+		account, err = db.getAccountByUploadToken(input.uploadToken.UUID)
+		if err != nil {
+			return
+		}
+	} else {
+		// This shouldnt happen but just in case
+		return ErrNotAuthenticated
 	}
 
-	// Insert new image
-	return db.Model(&Images{}).Create(&Images{
-		FileName:   fileName,
-		FileSize:   fileSize,
-		MimeType:   mimeType,
-		UploaderID: account.ID,
-		ExpiryDate: expiryDate,
-	}).Error
+	input.image.UploaderID = account.ID
+
+	return db.Model(&Images{}).Create(&input.image).Error
 }
 
 func (db *Database) deleteImagesFromAccount(userID uint) (err error) {

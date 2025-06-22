@@ -76,7 +76,7 @@ func (app *Application) loginCallback(c *gin.Context) {
 	}
 
 	if _, err := c.Cookie("linking"); err == nil {
-		_, account, loggedIn, err := app.validateCookie(c)
+		_, account, loggedIn, err := app.validateAuthCookie(c)
 		if errors.Is(err, ErrInvalidAuthCookie) {
 			app.clearAuthCookie(c)
 		} else if err != nil {
@@ -122,7 +122,7 @@ func (app *Application) linkApi(c *gin.Context) {
 	provider := c.Param("provider")
 	c.Request = contextWithProviderName(c, provider)
 
-	_, account, loggedIn, err := app.validateCookie(c)
+	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 		return
@@ -184,7 +184,7 @@ func (app *Application) registerApi(c *gin.Context) {
 }
 
 func (app *Application) logoutHandler(c *gin.Context) {
-	sessionToken, _, loggedIn, err := app.validateCookie(c)
+	sessionToken, _, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		app.clearAuthCookie(c)

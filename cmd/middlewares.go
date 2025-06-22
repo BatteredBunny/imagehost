@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/didip/tollbooth/v8"
@@ -48,30 +47,40 @@ func (app *Application) apiMiddleware() gin.HandlerFunc {
 	}
 }
 
-type TokenVerification struct {
-	Token string `form:"token"`
+type SessionTokenVerification struct {
+	SessionToken string `form:"token"`
 }
 
-func (app *Application) parseTokenFromForm(c *gin.Context) (sessionToken uuid.UUID, err error) {
-	var form TokenVerification
+func (app *Application) parseSessionTokenFromForm(c *gin.Context) (sessionToken uuid.UUID, err error) {
+	var form SessionTokenVerification
 	if err = c.ShouldBindWith(&form, binding.FormPost); err != nil {
 		return
 	}
 
-	sessionToken, err = uuid.Parse(form.Token)
+	sessionToken, err = uuid.Parse(form.SessionToken)
+
+	return
+}
+
+func (app *Application) parseSessionTokenFromCookieOrForm(c *gin.Context) (sessionToken uuid.UUID, err error) {
+	sessionToken, err = app.parseAuthCookie(c)
+	if err != nil {
+		err = nil
+		sessionToken, err = app.parseSessionTokenFromForm(c)
+	}
 
 	return
 }
 
 // Makes sure request has token and a valid one
-func (app *Application) hasSessionTokenMiddleware() gin.HandlerFunc {
+func (app *Application) verifySessionAuthentication() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sessionToken, err := app.parseTokenFromForm(c)
+		sessionToken, err := app.parseSessionTokenFromForm(c)
 		if err != nil {
 			// Fallback to checking cookie
 			log.Info().Msg("Validating cookie")
 			var loggedIn bool
-			sessionToken, _, loggedIn, _ = app.validateCookie(c)
+			sessionToken, _, loggedIn, _ = app.validateAuthCookie(c)
 			if loggedIn {
 			} else {
 				c.AbortWithError(http.StatusUnauthorized, err)
@@ -79,27 +88,29 @@ func (app *Application) hasSessionTokenMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		c.Set("token", sessionToken)
+		c.Set("sessionToken", sessionToken)
 		c.Next()
 	}
 }
 
-// Makes sure the admin token provided is valid
-func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
+// Makes sure the authenticated user is admin
+func (app *Application) isAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Verify the field exists
-		token, exists := c.Get("token")
+		sessionToken, exists := c.Get("sessionToken")
 		if !exists {
 			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 
-		isAdmin, err := app.isAdmin(token.(uuid.UUID))
-		if err != nil { // Could be a database error
-			log.Err(err).Msg("Failed to check if user is admin")
-			c.AbortWithStatus(http.StatusInternalServerError)
+		if account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID)); errors.Is(err, gorm.ErrRecordNotFound) {
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
-		} else if !isAdmin { // Invalid token or not an admin account
+		} else if err != nil {
+			log.Err(err).Msg("Failed to find user by session token")
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		} else if account.AccountType != "ADMIN" {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -109,16 +120,16 @@ func (app *Application) adminTokenVerificationMiddleware() gin.HandlerFunc {
 }
 
 // Makes sure the user token provided is valid
-func (app *Application) sessionTokenVerificationMiddleware() gin.HandlerFunc {
+func (app *Application) isSessionAuthenticated() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Verify the field exists
-		token, exists := c.Get("token")
+		sessionToken, exists := c.Get("sessionToken")
 		if !exists {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		if _, err := app.db.getUserBySessionToken(token.(uuid.UUID)); errors.Is(err, gorm.ErrRecordNotFound) {
+		if _, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID)); errors.Is(err, gorm.ErrRecordNotFound) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} else if err != nil {
@@ -131,60 +142,38 @@ func (app *Application) sessionTokenVerificationMiddleware() gin.HandlerFunc {
 	}
 }
 
-type UploadTokenVerification struct {
-	UploadToken string `form:"upload_token"`
-}
-
-// Makes sure request has upload token and a valid one
-func hasUploadTokenMiddleware() gin.HandlerFunc {
+// Makes sure request has a valid upload or session token
+func (app *Application) hasUploadOrSessionTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var (
-			form UploadTokenVerification
-			err  error
-		)
+		rawUploadToken, uploadTokenExists := c.GetPostForm("upload_token")
 
-		if err = c.MustBindWith(&form, binding.FormPost); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			c.Abort()
-			return
-		}
+		if uploadTokenExists && rawUploadToken != "" {
+			var uploadToken uuid.UUID
+			var err error
+			if uploadToken, err = uuid.Parse(rawUploadToken); err != nil {
+				c.AbortWithError(http.StatusUnauthorized, err)
+				return
+			}
 
-		if form.UploadToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "upload token is required"})
-			c.Abort()
-			return
-		}
+			valid, err := app.isValidUploadToken(uploadToken)
+			if err != nil { // Could be a database error
+				log.Err(err).Msg("Failed to check if upload token is valid")
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			} else if !valid { // Wrong or expired token given
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
 
-		var uploadToken uuid.UUID
-		if uploadToken, err = uuid.Parse(form.UploadToken); err != nil {
-			var errStr = fmt.Sprintf("invalid upload token: %s", err.Error())
-			c.JSON(http.StatusUnauthorized, gin.H{"error": errStr})
-			c.Abort()
-			return
-		}
+			c.Set("uploadToken", uploadToken)
+		} else {
+			sessionToken, err := app.parseSessionTokenFromCookieOrForm(c)
+			if err != nil {
+				c.AbortWithError(http.StatusUnauthorized, err)
+				return
+			}
 
-		c.Set("uploadToken", uploadToken)
-		c.Next()
-	}
-}
-
-func (app *Application) uploadTokenVerificationMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Verify the field exists
-		uploadToken, exists := c.Get("uploadToken")
-		if !exists {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		valid, err := app.isValidUploadToken(uploadToken.(uuid.UUID))
-		if err != nil { // Could be a database error
-			log.Err(err).Msg("Failed to check if upload token is valid")
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		} else if !valid { // Wrong or expired token given
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
+			c.Set("sessionToken", sessionToken)
 		}
 
 		c.Next()

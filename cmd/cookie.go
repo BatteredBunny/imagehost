@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -31,23 +30,31 @@ func (app *Application) clearAuthCookie(c *gin.Context) {
 
 var ErrInvalidAuthCookie = errors.New("Invalid session token")
 
-func (app *Application) validateCookie(c *gin.Context) (sessionToken uuid.UUID, account Accounts, loggedIn bool, err error) {
+func (app *Application) parseAuthCookie(c *gin.Context) (sessionToken uuid.UUID, err error) {
 	rawSessionToken, err := c.Cookie(AUTH_COOKIE)
-	if errors.Is(err, http.ErrNoCookie) {
-		err = nil
-		return
-	} else if err != nil {
+	if err != nil {
 		return
 	}
 
 	sessionToken, err = parseToken(rawSessionToken)
 	if err != nil {
-		err = ErrInvalidAuthCookie
 		return
 	}
 
-	if account, err = app.db.getUserBySessionToken(sessionToken); errors.Is(err, gorm.ErrRecordNotFound) {
+	return
+}
+
+func (app *Application) validateAuthCookie(c *gin.Context) (sessionToken uuid.UUID, account Accounts, loggedIn bool, err error) {
+	sessionToken, err = app.parseAuthCookie(c)
+	if err != nil {
 		err = ErrInvalidAuthCookie
+		app.clearAuthCookie(c)
+		return
+	}
+
+	if account, err = app.db.getAccountBySessionToken(sessionToken); errors.Is(err, gorm.ErrRecordNotFound) {
+		err = ErrInvalidAuthCookie
+		app.clearAuthCookie(c)
 		return
 	} else if err != nil {
 		return

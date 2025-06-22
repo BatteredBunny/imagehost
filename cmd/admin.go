@@ -6,21 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
-
-// Checks if the user is an admin with token
-func (app *Application) isAdmin(sessionToken uuid.UUID) (isAdmin bool, err error) {
-	account, err := app.db.getUserBySessionToken(sessionToken)
-	if err != nil {
-		return
-	}
-
-	isAdmin = account.AccountType == "ADMIN"
-
-	return
-}
 
 // Admin api for creating new user
 func (app *Application) adminCreateUser(c *gin.Context) {

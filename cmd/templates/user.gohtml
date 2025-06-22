@@ -50,6 +50,10 @@
 
                         <div>{{ formatTimeDate .CreatedAt }}</div>
                         <div>Size {{ .FileSize }} bytes</div>
+                        <form action="/api/file/delete" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="file_name" value="{{ .FileName }}" hidden>
+                            <input type="submit" value="Delete">
+                        </form>
                     </div>
                 </div>
                 {{ end }}

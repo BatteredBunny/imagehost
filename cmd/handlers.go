@@ -17,7 +17,7 @@ func (app *Application) indexPage(c *gin.Context) {
 		"Host": c.Request.Host,
 	}
 
-	_, account, loggedIn, err := app.validateCookie(c)
+	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 	} else if err != nil {
@@ -66,7 +66,7 @@ func (app *Application) toAccountStats(account *Accounts) (stats AccountStats, e
 }
 
 func (app *Application) adminPage(c *gin.Context) {
-	_, account, loggedIn, err := app.validateCookie(c)
+	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 	} else if err != nil {
@@ -115,7 +115,7 @@ func (app *Application) adminPage(c *gin.Context) {
 }
 
 func (app *Application) userPage(c *gin.Context) {
-	_, account, loggedIn, err := app.validateCookie(c)
+	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 	} else if err != nil {
@@ -171,7 +171,7 @@ func (app *Application) userPage(c *gin.Context) {
 }
 
 func (app *Application) loginPage(c *gin.Context) {
-	_, _, loggedIn, err := app.validateCookie(c)
+	_, _, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 	} else if err != nil {
@@ -187,7 +187,7 @@ func (app *Application) loginPage(c *gin.Context) {
 }
 
 func (app *Application) registerPage(c *gin.Context) {
-	_, _, loggedIn, err := app.validateCookie(c)
+	_, _, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
 		app.clearAuthCookie(c)
 	} else if err != nil {
@@ -235,13 +235,13 @@ func (app *Application) indexFiles(c *gin.Context) {
 }
 
 func (app *Application) newUploadTokenApi(c *gin.Context) {
-	sessionToken, exists := c.Get("token")
+	sessionToken, exists := c.Get("sessionToken")
 	if !exists {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	account, err := app.db.getUserBySessionToken(sessionToken.(uuid.UUID))
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -263,13 +263,13 @@ func (app *Application) newUploadTokenApi(c *gin.Context) {
 
 // TOOD: allow specifying uses and if its an admin account allow creating admin invites
 func (app *Application) newInviteCodeApi(c *gin.Context) {
-	sessionToken, exists := c.Get("token")
+	sessionToken, exists := c.Get("sessionToken")
 	if !exists {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	account, err := app.db.getUserBySessionToken(sessionToken.(uuid.UUID))
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return

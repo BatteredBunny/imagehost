@@ -18,13 +18,13 @@ import (
 
 // Api for deleting your own account
 func (app *Application) accountDeleteAPI(c *gin.Context) {
-	token, exists := c.Get("token")
+	sessionToken, exists := c.Get("sessionToken")
 	if !exists {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	account, err := app.db.getUserBySessionToken(token.(uuid.UUID))
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -74,8 +74,27 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 	var err error
 
 	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
-		c.String(http.StatusBadRequest, err.Error())
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if input.FileName == "" {
+		c.String(http.StatusBadRequest, "File name is required")
 		c.Abort()
+		return
+	}
+
+	rawSessionToken, sessionTokenExists := c.Get("sessionToken")
+	rawUploadToken, uploadTokenExists := c.Get("uploadToken")
+
+	var sessionToken uuid.NullUUID
+	var uploadToken uuid.NullUUID
+	if sessionTokenExists {
+		sessionToken = uuid.NullUUID{UUID: rawSessionToken.(uuid.UUID), Valid: true}
+	} else if uploadTokenExists {
+		uploadToken = uuid.NullUUID{UUID: rawUploadToken.(uuid.UUID), Valid: true}
+	} else {
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
@@ -97,14 +116,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 		return
 	}
 
-	// Should have been verified with middleware already
-	uploadToken, exists := c.Get("uploadToken")
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	if err = app.db.deleteImage(input.FileName, uploadToken.(uuid.UUID)); err != nil { // Deletes file entry from database
+	if err = app.db.deleteImage(input.FileName, uploadToken, sessionToken); err != nil { // Deletes file entry from database
 		log.Err(err).Msg("Failed to delete image entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -171,14 +183,34 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	// Should have been verified with middleware already
-	uploadToken, exists := c.Get("uploadToken")
-	if !exists {
+	input := CreateImageEntryInput{
+		image: Images{
+			FileName:   fullFileName,
+			FileSize:   uint(len(file)),
+			MimeType:   mime.String(),
+			ExpiryDate: expiryDate,
+		},
+	}
+
+	sessionToken, sessionTokenExists := c.Get("sessionToken")
+	uploadToken, uploadTokenExists := c.Get("uploadToken")
+
+	if sessionTokenExists {
+		input.sessionToken = uuid.NullUUID{
+			UUID:  sessionToken.(uuid.UUID),
+			Valid: true,
+		}
+	} else if uploadTokenExists {
+		input.uploadToken = uuid.NullUUID{
+			UUID:  uploadToken.(uuid.UUID),
+			Valid: true,
+		}
+	} else {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	if err = app.db.createImageEntry(fullFileName, uint(len(file)), mime.String(), uploadToken.(uuid.UUID), expiryDate); errors.Is(err, gorm.ErrRecordNotFound) {
+	if err = app.db.createImageEntry(input); errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {

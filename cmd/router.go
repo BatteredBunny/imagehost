@@ -57,8 +57,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	// Apis that require the upload token, typical this token is included in scripts
 	fileAPI := api.Group("/file")
 	fileAPI.Use(
-		hasUploadTokenMiddleware(),
-		app.uploadTokenVerificationMiddleware(),
+		app.hasUploadOrSessionTokenMiddleware(),
 	)
 
 	fileAPI.POST("/upload", app.uploadImageAPI)
@@ -68,8 +67,8 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	// Accounts for managing your user
 	accountAPI := api.Group("/account")
 	accountAPI.Use(
-		app.hasSessionTokenMiddleware(),
-		app.sessionTokenVerificationMiddleware(),
+		app.verifySessionAuthentication(),
+		app.isSessionAuthenticated(),
 	)
 
 	accountAPI.Any("/delete", app.accountDeleteAPI)
@@ -80,8 +79,8 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	// Admin apis
 	adminAPI := api.Group("/admin")
 	adminAPI.Use(
-		app.hasSessionTokenMiddleware(),
-		app.adminTokenVerificationMiddleware(),
+		app.verifySessionAuthentication(),
+		app.isAdmin(),
 	)
 
 	adminAPI.Any("/create_user", app.adminCreateUser)

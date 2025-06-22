@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/public/style.css">
+    <link rel="stylesheet" href="/public/styles/common.css">
+    <link rel="stylesheet" href="/public/styles/upload.css">
     <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
     <title>File host</title>
     <meta name="description" content="The best file host on all of interwebs">
@@ -13,34 +14,62 @@
 
 <body>
     <div id="mascot">
-        <img alt="Neco eating crab" height="180" width="224" src="/public/neco_crab.gif">
+        <img alt="Neco eating crab" height="180" width="224" src="/public/assets/neco_crab.gif">
     </div>
 
     {{ template "topbar.gohtml" . }}
 
+    <noscript>
+    <style>
+        .file-input {
+            display: flex !important;
+        }
+
+        .js-only {
+            display: none !important;
+        }
+    </style>
+    </noscript>
+
     <div class="container">
-        <div>
-            <h1>File host</h1>
-            <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
+        <h1>File host</h1>
+        <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
+
+        <div class="setting-group">
+            <h2>Upload</h2>
+            <form action="/api/file/upload" method="POST" enctype="multipart/form-data" class="upload-form">
+                <input type="text" name="type" value="upload" hidden>
+
+                {{ if not .LoggedIn }}
+                <div class="form-group">
+                    <label for="upload_token">Upload Token:</label>
+                    <input type="text" id="upload_token" name="upload_token" autocomplete="current-password" placeholder="Enter your upload token" required>
+                </div>
+                {{ end }}
+
+                <div class="form-group">
+                    <input type="file" id="file" name="file" required class="file-input">
+
+                    <div class="file-drop-zone js-only" id="fileDropZone">
+                        <div class="drop-content">
+                            <span class="drop-text">Drop file here or click to select</span>
+                            <span class="file-name bold" id="fileName"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="bold" for="expiry_date">Expires (optional):</label>
+                    <input type="date" id="expiry_date" name="expiry_date">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="upload-button bold">Upload File</button>
+                </div>
+            </form>
         </div>
-
-        <h2>Upload</h2>
-        <form action="/api/file/upload" method="POST" enctype="multipart/form-data">
-            <input type="text" name="type" value="upload" hidden>
-
-            <input type="text" name="upload_token" autocomplete="current-password" placeholder="Upload token">
-            <br>
-
-            <input type="file" name="file">
-            <br>
-
-            <span>Expires:</span>
-            <input type="date" name="expiry_date">
-            <br>
-
-            <input type="submit" value="Upload">
-        </form>
     </div>
+    <script src="/public/js/upload.js"></script>
 </body>
 
 </html>

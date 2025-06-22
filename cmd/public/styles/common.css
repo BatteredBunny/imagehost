@@ -54,6 +54,7 @@ body {
     position: absolute;
     bottom: 10px;
     right: 10px;
+    z-index: -1;
 }
 
 a {
@@ -168,9 +169,6 @@ code {
     }
 }
 
-#admin-panel {
-}
-
 #topbar {
     display: flex;
     flex-direction: row;
@@ -237,4 +235,8 @@ code {
         flex-direction: row;
         gap: 10px;
     }
+}
+
+.bold {
+    font-weight: bold;
 }

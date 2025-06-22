@@ -1,0 +1,114 @@
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        label {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="file"] {
+            padding: 10px;
+            border: 2px solid var(--menu-border-color);
+            border-radius: 5px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+
+            &:focus {
+                outline: none;
+                border-color: var(--link-color);
+            }
+
+            &::placeholder {
+                color: var(--text-color);
+                opacity: 0.6;
+            }
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed var(--menu-border-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            background-color: var(--background-color);
+            transition: all 0.2s ease;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                border-color: var(--link-color);
+                background-color: var(--menu-bg-color);
+            }
+
+            &.drag-over {
+                border-color: var(--link-color);
+                background-color: var(--menu-bg-color);
+                border-style: solid;
+            }
+
+            &.file-selected {
+                border-color: var(--link-color);
+                background-color: var(--menu-bg-color);
+            }
+
+            .drop-content {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                pointer-events: none;
+
+                .drop-text {
+                    color: var(--text-color);
+                    font-size: 16px;
+                    opacity: 0.7;
+                }
+
+                .file-name {
+                    color: var(--link-color);
+                    font-size: 14px;
+                    word-break: break-all;
+                }
+            }
+        }
+
+        .upload-button {
+            background-color: var(--link-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+}

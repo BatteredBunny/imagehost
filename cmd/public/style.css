@@ -202,11 +202,33 @@ code {
         gap: 10px;
 
         .user-card {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: column;
+
             border: 1px solid var(--menu-border-color);
             border-radius: 5px;
             padding: 10px;
+            gap: 10px;
+
+            .top-row {
+                display: flex;
+                justify-content: space-between;
+
+                .right {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 5px;
+                }
+            }
         }
     }
+}
+
+.badge {
+    border: 1px solid var(--menu-border-color);
+    border-radius: 10px;
+    padding: 4px;
 }
 
 #account-settings {

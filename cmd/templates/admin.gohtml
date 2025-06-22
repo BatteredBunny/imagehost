@@ -22,17 +22,27 @@
             <div class="users-grid">
                 {{ range .Users }}
                     <div class="user-card">
-                        <div>User {{ .ID }}{{ if .You }} (You){{ end }}</div>
-                        <div>Type {{ .AccountType }}</div>
-                        <div>Linked to {{ .GithubUsername }}</div>
-                        <div>Created at {{ formatTimeDate .CreatedAt }}</div>
-                        <div>Space used {{ .SpaceUsed }} bytes</div>
-                        <div>Files uploaded {{ .FilesUploaded }}</div>
+                        <div class="top-row">
+                            <div class="left">User {{ .ID }}</div>
+                            <div class="right">
+                                {{ if .You }}<div class="badge">You</div>{{ end }}
+                                <div class="badge">{{ .AccountType }}</div>
+                            </div>
+                        </div>
 
-                        <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
-                            <input type="text" name="id" value="{{ .ID }}" hidden>
-                            <button type="submit">Delete</button>
-                        </form>
+                        <div class="middle-row">
+                            <div>Linked to {{ .GithubUsername }}</div>
+                            <div>Created at {{ formatTimeDate .CreatedAt }}</div>
+                            <div>Space used {{ .SpaceUsed }} bytes</div>
+                            <div>Files uploaded {{ .FilesUploaded }}</div>
+                        </div>
+
+                        <div class="bottom-row">
+                            <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
+                                <input type="text" name="id" value="{{ .ID }}" hidden>
+                                <button type="submit">Delete</button>
+                            </form>
+                        </div>
                     </div>
                 {{ end }}
             </div>

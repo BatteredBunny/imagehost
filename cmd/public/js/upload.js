@@ -1,6 +1,30 @@
-const fileDropZone = document.getElementById('fileDropZone');
-const fileInput = document.getElementById('file');
-const fileName = document.getElementById('fileName');
+const fileDropZone = document.getElementById("fileDropZone");
+const fileInput = document.getElementById("file");
+const fileName = document.getElementById("fileName");
+const filePreview = document.getElementById("filePreview");
+const previewContent = document.getElementById("previewContent");
+
+function showFilePreview(file) {
+    fileName.textContent = file.name;
+    previewContent.innerHTML = "";
+
+    const fileType = file.type.toLowerCase();
+    const fileURL = URL.createObjectURL(file);
+
+    if (fileType.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.src = fileURL;
+        img.alt = file.name;
+        previewContent.appendChild(img);
+    } else if (fileType.startsWith("video/")) {
+        const video = document.createElement("video");
+        video.src = fileURL;
+        previewContent.appendChild(video);
+    }
+
+    filePreview.style.display = "flex";
+    fileDropZone.classList.add("file-selected");
+}
 
 fileDropZone.addEventListener('click', () => {
     fileInput.click();
@@ -9,8 +33,7 @@ fileDropZone.addEventListener('click', () => {
 fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
-        fileName.textContent = file.name;
-        fileDropZone.classList.add('file-selected');
+        showFilePreview(file);
     }
 });
 
@@ -31,7 +54,6 @@ fileDropZone.addEventListener('drop', (e) => {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         fileInput.files = files;
-        fileName.textContent = files[0].name;
-        fileDropZone.classList.add('file-selected');
+        showFilePreview(files[0]);
     }
 });

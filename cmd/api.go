@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
@@ -115,12 +116,22 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 /*
 Api for uploading image
 curl -F 'upload_token=1234567890' -F 'file=@yourfile.png'
-The expiry_date is a unix timestamp in seconds
+
+Additional inputs:
+expiry_timestamp: unix timestamp in seconds
+expiry_date: YYYY-MM-DD in string, expiry_timestamp gets priority
 */
 func (app *Application) uploadImageAPI(c *gin.Context) {
 	var expiryDate time.Time
-	timestamp, exists := c.GetPostForm("expiry_date")
+
+	date, exists := c.GetPostForm("expiry_date")
 	if exists {
+		expiryDate, _ = time.Parse("2006-01-02", date)
+	}
+
+	timestamp, exists := c.GetPostForm("expiry_timestamp")
+	if exists {
+		log.Info().Any("expiry_date", timestamp).Msg("Expiry date provided")
 		unixSecs, err := strconv.Atoi(timestamp)
 		if err == nil {
 			expiryDate = time.Unix(int64(unixSecs), 0)
@@ -142,7 +153,8 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	fullFileName := app.generateFullFileName(file)
+	mime := mimetype.Detect(file)
+	fullFileName := app.generateFullFileName(mime)
 
 	switch app.config.fileStorageMethod {
 	case fileStorageS3:
@@ -166,7 +178,7 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.createImageEntry(fullFileName, uploadToken.(uuid.UUID), expiryDate); errors.Is(err, gorm.ErrRecordNotFound) {
+	if err = app.db.createImageEntry(fullFileName, uint(len(file)), mime.String(), uploadToken.(uuid.UUID), expiryDate); errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {

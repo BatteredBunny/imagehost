@@ -29,8 +29,8 @@ func randomString() string {
 	return rand.Text()
 }
 
-func (app *Application) generateFullFileName(file []byte) string {
-	return fmt.Sprintf("%s%s", randomString(), mimetype.Detect(file).Extension())
+func (app *Application) generateFullFileName(mime *mimetype.MIME) string {
+	return fmt.Sprintf("%s%s", randomString(), mime.Extension())
 }
 
 func (app *Application) isValidUploadToken(uploadToken uuid.UUID) (bool, error) {

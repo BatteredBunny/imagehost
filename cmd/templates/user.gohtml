@@ -33,10 +33,24 @@
             <div class="image-grid">
                 {{ range .Files }}
                 <div class="image">
-                    <code><img width="100" src="/{{ .FileName }}" alt="{{ .FileName }}"></code>
-                    {{ if formatTimeDate .ExpiryDate }}
-                        <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
-                    {{ end }}
+                    <div class="image-content">
+                        {{ if mimeIsImage .MimeType }}
+                            <img src="/{{ .FileName }}" alt="Uploaded image">
+                        {{ else if mimeIsVideo .MimeType }}
+                            <video src="/{{ .FileName }}" alt="Uploaded video" controls>
+                        {{ else }}
+                            <a href="/{{ .FileName }}" alt="Uploaded file">{{ .FileName }}</a>
+                        {{ end }}
+                    </div>
+
+                    <div class="info-bar">
+                        {{ if formatTimeDate .ExpiryDate }}
+                            <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                        {{ end }}
+
+                        <div>{{ formatTimeDate .CreatedAt }}</div>
+                        <div>Size {{ .FileSize }} bytes</div>
+                    </div>
                 </div>
                 {{ end }}
             </div>

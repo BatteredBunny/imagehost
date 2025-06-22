@@ -3,6 +3,9 @@
         <a href="/">Home</a>
         {{ if .LoggedIn }}
         <a href="/user">Account {{ .AccountID }}</a>
+        {{ if .IsAdmin }}
+        <a href="/admin">Admin</a>
+        {{ end }}
         <a href="/logout">Logout</a>
         {{ else }}
         <a href="/login">Login</a>

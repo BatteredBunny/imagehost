@@ -26,11 +26,92 @@ func (app *Application) indexPage(c *gin.Context) {
 	}
 
 	if loggedIn {
+		// For top bar
 		templateInput["LoggedIn"] = true
 		templateInput["AccountID"] = account.ID
+		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
 	}
 
 	c.HTML(http.StatusOK, "index.gohtml", templateInput)
+}
+
+type AccountStats struct {
+	Accounts
+	SpaceUsed     int64
+	FilesUploaded int64
+}
+
+func (app *Application) toAccountStats(account *Accounts) (stats AccountStats, err error) {
+	images, err := app.db.getAllImagesFromAccount(account.ID)
+	if err != nil {
+		return
+	}
+
+	stats = AccountStats{
+		*account,
+		0,
+		0,
+	}
+
+	for _, image := range images {
+		stats.SpaceUsed += int64(image.FileSize)
+		stats.FilesUploaded++
+	}
+
+	if stats.GithubUsername == "" {
+		stats.GithubUsername = "none"
+	}
+
+	return
+}
+
+func (app *Application) adminPage(c *gin.Context) {
+	_, account, loggedIn, err := app.validateCookie(c)
+	if errors.Is(err, ErrInvalidAuthCookie) {
+		app.clearAuthCookie(c)
+	} else if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if account.AccountType != "ADMIN" {
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+		return
+	}
+
+	var templateInput gin.H = make(gin.H)
+
+	if loggedIn {
+		// For top bar
+		templateInput["LoggedIn"] = true
+		templateInput["AccountID"] = account.ID
+		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
+
+		users, err := app.db.getAccounts()
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		var stats []AccountStats
+		for _, user := range users {
+			stat, err := app.toAccountStats(&user)
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+
+			stats = append(stats, stat)
+		}
+
+		templateInput["Users"] = stats
+	}
+
+	if loggedIn {
+		c.HTML(http.StatusOK, "admin.gohtml", templateInput)
+	} else {
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
+	}
 }
 
 func (app *Application) userPage(c *gin.Context) {
@@ -53,7 +134,6 @@ func (app *Application) userPage(c *gin.Context) {
 		// For top bar
 		templateInput["LoggedIn"] = true
 		templateInput["AccountID"] = account.ID
-
 		templateInput["IsAdmin"] = account.AccountType == "ADMIN"
 
 		templateInput["InviteCodes"], err = app.db.inviteCodesByAccount(account.ID)

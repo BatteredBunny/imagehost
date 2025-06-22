@@ -72,7 +72,36 @@ body {
 #images {
     .image-grid {
         display: flex;
+        flex-wrap: wrap;
         gap: 10px;
+
+        .image {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 300px;
+            max-width: 300px;
+            border: 1px solid var(--menu-border-color);
+            border-radius: 5px;
+
+            .image-content {
+                img,
+                video {
+                    max-width: 300px;
+                    height: auto;
+                    object-fit: cover;
+                }
+            }
+
+            .info-bar {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px;
+                border-top: 1px solid var(--menu-border-color);
+                gap: 5px;
+            }
+        }
     }
 }
 
@@ -147,5 +176,18 @@ code {
         display: flex;
         flex-direction: row;
         gap: 10px;
+    }
+}
+
+#users-panel {
+    .users-grid {
+        display: flex;
+        gap: 10px;
+
+        .user-card {
+            border: 1px solid var(--menu-border-color);
+            border-radius: 5px;
+            padding: 10px;
+        }
     }
 }

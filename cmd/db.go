@@ -58,7 +58,10 @@ type Images struct {
 
 	ID uint `gorm:"primaryKey"`
 
-	FileName   string
+	FileName string
+	FileSize uint
+	MimeType string
+
 	ExpiryDate time.Time `gorm:"default:null"` // Time when the image will be deleted
 
 	UploaderID uint
@@ -130,6 +133,7 @@ func prepareDB(c Config) (database Database) {
 	return
 }
 
+// Returns number of accounts in the database
 func (db *Database) accountAmount() (count int64, err error) {
 	err = db.Model(&Accounts{}).
 		Count(&count).Error
@@ -268,7 +272,7 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 }
 
 // Creates image entry in database, set the expiryDate to a future date when the image should be deleted
-func (db *Database) createImageEntry(fileName string, uploadToken uuid.UUID, expiryDate time.Time) (err error) {
+func (db *Database) createImageEntry(fileName string, fileSize uint, mimeType string, uploadToken uuid.UUID, expiryDate time.Time) (err error) {
 	account, err := db.getAccountByUploadToken(uploadToken)
 	if err != nil {
 		return
@@ -277,6 +281,8 @@ func (db *Database) createImageEntry(fileName string, uploadToken uuid.UUID, exp
 	// Insert new image
 	return db.Model(&Images{}).Create(&Images{
 		FileName:   fileName,
+		FileSize:   fileSize,
+		MimeType:   mimeType,
 		UploaderID: account.ID,
 		ExpiryDate: expiryDate,
 	}).Error
@@ -305,6 +311,13 @@ func (db *Database) inviteCodesByAccount(accountID uint) (inviteCodes []InviteCo
 	return
 }
 
+func (db *Database) getAccounts() (users []Accounts, err error) {
+	err = db.Model(&Accounts{}).
+		Scan(&users).Error
+
+	return
+}
+
 func (db *Database) imagesAmountOnAccount(accountID uint) (count int64, err error) {
 	err = db.Model(&Images{}).
 		Where(&Images{UploaderID: accountID}).
@@ -316,7 +329,6 @@ func (db *Database) imagesAmountOnAccount(accountID uint) (count int64, err erro
 
 func (db *Database) getAllImagesFromAccount(userID uint) (images []Images, err error) {
 	err = db.Model(&Images{}).
-		Select("file_name").
 		Where(&Images{UploaderID: userID}).
 		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Find(&images).Error

@@ -95,7 +95,8 @@
                         margin-bottom: 5px;
 
                         img,
-                        video {
+                        video,
+                        audio {
                             max-width: "200px";
                             max-height: "200px";
                             object-fit: "contain";

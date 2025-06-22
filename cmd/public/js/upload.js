@@ -20,6 +20,11 @@ function showFilePreview(file) {
         const video = document.createElement("video");
         video.src = fileURL;
         previewContent.appendChild(video);
+    } else if (fileType.startsWith("audio/")) {
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        audio.src = fileURL;
+        previewContent.appendChild(audio);
     }
 
     filePreview.style.display = "flex";

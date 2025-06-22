@@ -42,6 +42,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 		"formatTimeDate": formatTimeDate,
 		"mimeIsImage":    mimeIsImage,
 		"mimeIsVideo":    mimeIsVideo,
+		"mimeIsAudio":    mimeIsAudio,
 	}).ParseFS(TemplateFiles, "templates/*.gohtml", "templates/components/*.gohtml"))
 	app.Router.SetHTMLTemplate(templates)
 

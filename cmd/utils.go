@@ -26,6 +26,10 @@ func mimeIsVideo(mimeType string) bool {
 	return strings.HasPrefix(mimeType, "video/")
 }
 
+func mimeIsAudio(mimeType string) bool {
+	return strings.HasPrefix(mimeType, "audio/")
+}
+
 func Sum[T any](slice []T, getValue func(T) int) int {
 	sum := 0
 	for _, item := range slice {

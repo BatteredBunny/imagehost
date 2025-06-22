@@ -44,6 +44,8 @@
                             <img src="/{{ .FileName }}" alt="Uploaded image">
                         {{ else if mimeIsVideo .MimeType }}
                             <video src="/{{ .FileName }}" alt="Uploaded video" controls>
+                        {{ else if mimeIsAudio .MimeType }}
+                            <audio src="/{{ .FileName }}" controls>
                         {{ else }}
                             <a href="/{{ .FileName }}" alt="Uploaded file">{{ .FileName }}</a>
                         {{ end }}

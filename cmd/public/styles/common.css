@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
 
 html,
 body {
@@ -69,42 +69,6 @@ body {
     padding: 5px;
 }
 
-#images {
-    .image-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-
-        .image {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 300px;
-            max-width: 300px;
-            border: 1px solid var(--menu-border-color);
-            border-radius: 5px;
-
-            .image-content {
-                img,
-                video {
-                    max-width: 300px;
-                    height: auto;
-                    object-fit: cover;
-                }
-            }
-
-            .info-bar {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: center;
-                padding: 5px;
-                border-top: 1px solid var(--menu-border-color);
-                gap: 5px;
-            }
-        }
-    }
-}
-
 code {
     background-color: var(--alternative-bg-color);
     color: var(--alternative-text-color);
@@ -146,86 +110,6 @@ button, input[type="submit"] {
     }
 }
 
-
-#upload-tokens {
-    form input[type="text"] {
-        padding: 5px;
-    }
-
-    .upload-tokens-list {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-
-        margin-top: 5px;
-        padding-bottom: 5px;
-
-        border: 2px solid var(--menu-border-color);
-        border-radius: 5px;
-
-        .upload-token-entry {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            justify-content: space-between;
-
-            border-top: 1px solid var(--menu-border-color);
-            padding: 5px;
-
-            .info-row {
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
-
-                .nickname {
-                    font-weight: bold;
-                    font-size: large;
-                }
-
-                .extra-info {
-                    display: flex;
-                    flex-direction: row;
-                    gap: 10px;
-                }
-            }
-
-            code {
-                user-select: all;
-            }
-        }
-    }
-}
-
-#invite-codes {
-    .codes {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-
-        .code {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-
-            border-bottom: 1px solid var(--menu-border-color);
-            padding: 10px;
-
-            .code-text {
-                user-select: all;
-                display: flex;
-                align-self: center;
-            }
-
-            .info {
-                display: flex;
-                flex-direction: row;
-                gap: 10px;
-                align-self: center;
-            }
-        }
-    }
-}
-
 #topbar {
     display: flex;
     flex-direction: row;
@@ -246,87 +130,6 @@ button, input[type="submit"] {
         display: flex;
         flex-direction: row;
         gap: 10px;
-    }
-}
-
-#users-panel {
-    .users-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-
-        .user-card {
-            display: flex;
-            justify-content: space-between;
-            flex-direction: column;
-
-            border: 1px solid var(--menu-border-color);
-            border-radius: 5px;
-            padding: 10px;
-            gap: 10px;
-
-            flex: 2;
-
-            .top-row {
-                display: flex;
-                justify-content: space-between;
-
-                .left {
-                    align-self: center;
-                }
-
-                .right {
-                    display: flex;
-                    flex-direction: row;
-                    gap: 5px;
-                }
-            }
-
-            .middle-row {
-                display: flex;
-                flex-direction: column;
-                border: 2px solid var(--menu-border-color);
-                border-top: 0px;
-                border-radius: 5px;
-
-                .entry {
-                    display: flex;
-                    flex-direction: row;
-                    border-top: 1px solid var(--menu-border-color);
-
-                    div {
-                        padding: 2px;
-                    }
-
-                    .name {
-                        border-right: 1px solid var(--menu-border-color);
-                        flex: 1;
-
-                        align-self: center;
-
-                        svg {
-                            vertical-align: middle;
-                            margin-left: 2px;
-                        }
-
-                        div {
-                            display: inline-block;
-                            vertical-align: middle;
-                        }
-                    }
-
-                    .value {
-                        flex: 1;
-                    }
-                }
-            }
-
-            .bottom-row {
-                display: flex;
-                flex-direction: row;
-            }
-        }
     }
 }
 

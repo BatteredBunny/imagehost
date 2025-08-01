@@ -1,0 +1,115 @@
+
+#images {
+    .image-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+
+        .image {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 300px;
+            max-width: 300px;
+            border: 1px solid var(--menu-border-color);
+            border-radius: 5px;
+
+            .image-content {
+                img,
+                video {
+                    max-width: 300px;
+                    height: auto;
+                    object-fit: cover;
+                }
+            }
+
+            .info-bar {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px;
+                border-top: 1px solid var(--menu-border-color);
+                gap: 5px;
+            }
+        }
+    }
+}
+
+#upload-tokens {
+    form input[type="text"] {
+        padding: 5px;
+    }
+
+    .upload-tokens-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        margin-top: 5px;
+        padding-bottom: 5px;
+
+        border: 2px solid var(--menu-border-color);
+        border-radius: 5px;
+
+        .upload-token-entry {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            justify-content: space-between;
+
+            border-top: 1px solid var(--menu-border-color);
+            padding: 5px;
+
+            .info-row {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+
+                .nickname {
+                    font-weight: bold;
+                    font-size: large;
+                }
+
+                .extra-info {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 10px;
+                }
+            }
+
+            code {
+                user-select: all;
+            }
+        }
+    }
+}
+
+#invite-codes {
+    .codes {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        .code {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            border-bottom: 1px solid var(--menu-border-color);
+            padding: 10px;
+
+            .code-text {
+                user-select: all;
+                display: flex;
+                align-self: center;
+            }
+
+            .info {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                align-self: center;
+            }
+        }
+    }
+}

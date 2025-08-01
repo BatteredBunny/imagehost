@@ -72,7 +72,7 @@ func (app *Application) parseSessionTokenFromCookieOrForm(c *gin.Context) (sessi
 	return
 }
 
-// Makes sure request has token and a valid one
+// Makes sure request has session token and a valid one
 func (app *Application) verifySessionAuthentication() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionToken, err := app.parseSessionTokenFromForm(c)

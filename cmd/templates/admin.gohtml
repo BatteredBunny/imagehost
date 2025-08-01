@@ -31,16 +31,65 @@
                         </div>
 
                         <div class="middle-row">
-                            <div>Linked to {{ .GithubUsername }}</div>
-                            <div>Created at {{ formatTimeDate .CreatedAt }}</div>
-                            <div>Space used {{ .SpaceUsed }} bytes</div>
-                            <div>Files uploaded {{ .FilesUploaded }}</div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#github" />
+                                    </svg>
+                                    <div>Github</div>
+                                </div>
+                                <div class="value">{{ .GithubUsername }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#calendar" />
+                                    </svg>
+                                    <div>Creation</div>
+                                </div>
+                                <div class="value">{{ formatTimeDate .CreatedAt }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#user" />
+                                    </svg>
+                                    <div>Invited by</div>
+                                </div>
+                                <div class="value">{{ .InvitedBy }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                                    </svg>
+                                    <div>Space used</div>
+                                </div>
+                                <div class="value">{{ .SpaceUsed }} bytes</div>
+                            </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#file" />
+                                    </svg>
+                                    <div>Files uploaded</div>
+                                </div>
+                                <div class="value">{{ .FilesUploaded }}</div>
+                            </div>
                         </div>
 
                         <div class="bottom-row">
                             <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button type="submit">Delete</button>
+                                <button class="delete-button" type="submit">Delete user</button>
+                            </form>
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="text" name="id" value="{{ .ID }}" hidden>
+                                <button class="delete-button" type="submit">Delete files</button>
+                            </form>
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="text" name="id" value="{{ .ID }}" hidden>
+                                <button class="delete-button" type="submit">Delete all tokens</button>
                             </form>
                         </div>
                     </div>

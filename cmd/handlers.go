@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -38,6 +40,7 @@ func (app *Application) indexPage(c *gin.Context) {
 type AccountStats struct {
 	Accounts
 	SpaceUsed     int64
+	InvitedBy     string
 	FilesUploaded int64
 	You           bool
 }
@@ -51,8 +54,22 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 	stats = AccountStats{
 		Accounts:      *account,
 		SpaceUsed:     0,
+		InvitedBy:     "",
 		FilesUploaded: 0,
 		You:           account.ID == requesterAccountID,
+	}
+
+	if account.InvitedBy == 0 {
+		stats.InvitedBy = "system"
+	} else if account.InvitedBy > 0 {
+		invitedBy, err := app.db.getAccountByID(account.InvitedBy)
+		if err == nil && invitedBy.GithubUsername != "" {
+			stats.InvitedBy = fmt.Sprintf("%s (%d)", invitedBy.GithubUsername, invitedBy.ID)
+		} else {
+			stats.InvitedBy = strconv.Itoa(int(account.InvitedBy))
+		}
+	} else {
+		stats.InvitedBy = strconv.Itoa(int(account.InvitedBy))
 	}
 
 	for _, image := range images {
@@ -257,7 +274,10 @@ func (app *Application) newUploadTokenApi(c *gin.Context) {
 	}
 
 	var uploadToken uuid.UUID
-	if uploadToken, err = app.db.createUploadToken(account.ID); err != nil {
+
+	nickname := c.PostForm("nickname")
+
+	if uploadToken, err = app.db.createUploadToken(account.ID, nickname); err != nil {
 		log.Err(err).Msg("Failed to create upload token")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -266,7 +286,45 @@ func (app *Application) newUploadTokenApi(c *gin.Context) {
 	c.String(http.StatusOK, uploadToken.String())
 }
 
-// TOOD: allow specifying uses and if its an admin account allow creating admin invites
+func (app *Application) deleteUploadTokenAPI(c *gin.Context) {
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	rawUploadToken := c.PostForm("upload_token")
+	if rawUploadToken == "" {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	uploadToken, err := uuid.Parse(rawUploadToken)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err = app.db.deleteUploadToken(account.ID, uploadToken); err != nil {
+		log.Err(err).Msg("Failed to delete upload token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, "Upload token deleted successfully")
+}
+
+// TODO: allow specifying uses and if its an admin account allow creating admin invites
 func (app *Application) newInviteCodeApi(c *gin.Context) {
 	sessionToken, exists := c.Get("sessionToken")
 	if !exists {
@@ -292,6 +350,34 @@ func (app *Application) newInviteCodeApi(c *gin.Context) {
 	}
 
 	c.String(http.StatusOK, inviteCode.Code)
+}
+
+func (app *Application) deleteInviteCodeAPI(c *gin.Context) {
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	inviteCode := c.PostForm("invite_code")
+
+	if err = app.db.deleteInviteCode(inviteCode, account.ID); err != nil {
+		log.Err(err).Msg("Failed to delete invite code")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, "Invite code deleted successfully")
 }
 
 func (app *Application) deleteImagesAPI(c *gin.Context) {

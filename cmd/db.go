@@ -36,6 +36,9 @@ type UploadTokens struct {
 
 	ID uint `gorm:"primaryKey"`
 
+	LastUsed *time.Time
+	Nickname string
+
 	Token uuid.UUID `gorm:"uniqueIndex"`
 
 	AccountID uint
@@ -206,6 +209,15 @@ func (db *Database) createInviteCode(uses uint, accountType string, inviteCreato
 	return
 }
 
+func (db *Database) deleteInviteCode(code string, accountID uint) (err error) {
+	return db.Model(&InviteCodes{}).
+		Where(&InviteCodes{
+			Code:            code,
+			InviteCreatorID: accountID,
+		}).
+		Delete(&InviteCodes{}).Error
+}
+
 func (db *Database) useCode(code string) (accountType string, invitedBy uint, err error) {
 	var inviteCode InviteCodes
 	if err = db.Model(&InviteCodes{}).
@@ -274,6 +286,12 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 		Where(&UploadTokens{Token: uploadToken}).
 		Select("account_id").
 		First(&accountID).Error; err != nil {
+		return
+	}
+
+	if err = db.Model(&UploadTokens{}).
+		Where(&UploadTokens{Token: uploadToken}).
+		Update("last_used", time.Now()).Error; err != nil {
 		return
 	}
 
@@ -373,6 +391,14 @@ func (db *Database) getAllImagesFromAccount(userID uint) (images []Images, err e
 	return
 }
 
+func (db *Database) getAccountByID(accountID uint) (account Accounts, err error) {
+	err = db.Model(&Accounts{}).
+		Where(&Accounts{ID: accountID}).
+		First(&account).Error
+
+	return
+}
+
 // Looks if file exists in database
 func (db *Database) fileExists(fileName string) (bool, error) {
 	var count int64
@@ -421,22 +447,42 @@ func (db *Database) createAccount(accountType string, invitedBy uint) (account A
 	return
 }
 
-func (db *Database) getUploadTokens(userID uint) (uploadTokens []uuid.UUID, err error) {
+type UiUploadToken struct {
+	Token    uuid.UUID
+	Nickname string
+	LastUsed *time.Time
+}
+
+func (db *Database) getUploadTokens(userID uint) (uploadTokens []UiUploadToken, err error) {
 	err = db.Model(&UploadTokens{}).
 		Where(&UploadTokens{AccountID: userID}).
-		Select("token").
+		Select("token, nickname, last_used").
 		Scan(&uploadTokens).Error
 
 	return
 }
 
-func (db *Database) createUploadToken(userID uint) (uploadToken uuid.UUID, err error) {
+func (db *Database) createUploadToken(userID uint, nickname string) (uploadToken uuid.UUID, err error) {
 	uploadToken = uuid.New()
 
 	err = db.Model(&UploadTokens{}).
-		Create(&UploadTokens{AccountID: userID, Token: uploadToken}).Error
+		Create(&UploadTokens{
+			AccountID: userID,
+			Token:     uploadToken,
+			LastUsed:  nil,
+			Nickname:  nickname,
+		}).Error
 
 	return
+}
+
+func (db *Database) deleteUploadToken(userID uint, uploadToken uuid.UUID) (err error) {
+	return db.Model(&UploadTokens{}).
+		Where(&UploadTokens{
+			AccountID: userID,
+			Token:     uploadToken,
+		}).
+		Delete(&UploadTokens{}).Error
 }
 
 func (db *Database) findExpiredImages() (images []Images, err error) {

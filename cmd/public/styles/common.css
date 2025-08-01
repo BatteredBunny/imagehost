@@ -17,37 +17,21 @@ body {
 :root {
     color-scheme: light dark;
 
-    --background-color: white;
-    --text-color: black;
-    --link-color: purple;
+    --background-color: light-dark(white, #1e1e1e);
+    --text-color: light-dark(black, white);
+    --link-color: light-dark(purple, orange);
 
-    --menu-bg-color: #f0f0f0;
-    --menu-border-color: #cccccc;
+    --button-border-color: light-dark(#cccccc, #666666);
 
-    --alternative-bg-color: #e0e0e0;
-    --alternative-text-color: black;
+    --menu-bg-color: light-dark(#f0f0f0, #333333);
+    --menu-border-color: light-dark(#cccccc, #666666);
 
-    --warning-bg-color: #ffcccc;
+    --alternative-bg-color: light-dark(#e0e0e0, #444444);
+    --alternative-text-color: light-dark(black, white);
+
+    --warning-bg-color: light-dark(#ffcccc, #813737);
     --warning-border-color: #ff0000;
     --warning-text-color: #ff0000;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background-color: #1e1e1e;
-        --text-color: white;
-        --link-color: orange;
-
-        --menu-bg-color: #333333;
-        --menu-border-color: #666666;
-
-        --alternative-bg-color: #444444;
-        --alternative-text-color: white;
-
-        --warning-bg-color: #813737;
-        --warning-border-color: #ff0000;
-        --warning-text-color: #ff0000;
-    }
 }
 
 #mascot {
@@ -126,15 +110,88 @@ code {
     color: var(--alternative-text-color);
     padding: 5px;
     border-radius: 5px;
+    border: 1px solid var(--menu-border-color);
 }
 
+button, input[type="submit"] {
+    border: 1px solid var(--button-border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px;
+
+    transition-duration: .15s;
+}
+
+.feather-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.delete-button {
+    color: rgb(247, 0, 0);
+    border-color: rgb(247, 0, 0) !important;
+
+    &:hover {
+        background-color: rgb(214, 0, 0);
+        border-color: rgb(214, 0, 0);
+
+        color: white;
+
+        transition-duration: .2s;
+    }
+}
+
+
 #upload-tokens {
-    ul {
+    form input[type="text"] {
+        padding: 5px;
+    }
+
+    .upload-tokens-list {
         display: flex;
         flex-direction: column;
         gap: 5px;
-        li code {
-            user-select: all;
+
+        margin-top: 5px;
+        padding-bottom: 5px;
+
+        border: 2px solid var(--menu-border-color);
+        border-radius: 5px;
+
+        .upload-token-entry {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            justify-content: space-between;
+
+            border-top: 1px solid var(--menu-border-color);
+            padding: 5px;
+
+            .info-row {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+
+                .nickname {
+                    font-weight: bold;
+                    font-size: large;
+                }
+
+                .extra-info {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 10px;
+                }
+            }
+
+            code {
+                user-select: all;
+            }
         }
     }
 }
@@ -151,7 +208,7 @@ code {
             justify-content: space-between;
 
             border-bottom: 1px solid var(--menu-border-color);
-            padding: 1px;
+            padding: 10px;
 
             .code-text {
                 user-select: all;
@@ -209,15 +266,65 @@ code {
             padding: 10px;
             gap: 10px;
 
+            flex: 2;
+
             .top-row {
                 display: flex;
                 justify-content: space-between;
+
+                .left {
+                    align-self: center;
+                }
 
                 .right {
                     display: flex;
                     flex-direction: row;
                     gap: 5px;
                 }
+            }
+
+            .middle-row {
+                display: flex;
+                flex-direction: column;
+                border: 2px solid var(--menu-border-color);
+                border-top: 0px;
+                border-radius: 5px;
+
+                .entry {
+                    display: flex;
+                    flex-direction: row;
+                    border-top: 1px solid var(--menu-border-color);
+
+                    div {
+                        padding: 2px;
+                    }
+
+                    .name {
+                        border-right: 1px solid var(--menu-border-color);
+                        flex: 1;
+
+                        align-self: center;
+
+                        svg {
+                            vertical-align: middle;
+                            margin-left: 2px;
+                        }
+
+                        div {
+                            display: inline-block;
+                            vertical-align: middle;
+                        }
+                    }
+
+                    .value {
+                        flex: 1;
+                    }
+                }
+            }
+
+            .bottom-row {
+                display: flex;
+                flex-direction: row;
             }
         }
     }

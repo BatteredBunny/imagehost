@@ -74,8 +74,10 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 
 	accountAPI.POST("/delete", app.accountDeleteAPI)
 	accountAPI.POST("/new_upload_token", app.newUploadTokenApi)
+	accountAPI.POST("/delete_upload_token", app.deleteUploadTokenAPI)
 	accountAPI.POST("/new_invite_code", app.newInviteCodeApi)
-	accountAPI.POST("/delete_images", app.deleteImagesAPI)
+	accountAPI.POST("/delete_invite_code", app.deleteInviteCodeAPI)
+	accountAPI.POST("/delete_all_images", app.deleteImagesAPI)
 	// ---
 
 	// Admin apis

@@ -71,19 +71,46 @@
         <div id="upload-tokens" class="setting-group">
             <h2>Upload tokens</h2>
 
+            <p>For script usage, its recommended to give programs or scripts specific tokens instead of general ones for security purposes.</p>
+
             <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
+                <input type="text" name="nickname" placeholder="Nickname">
                 <input type="submit" value="Create upload token">
             </form>
 
-            <ul>
+            {{ if .UploadTokens }}
+            <div class="upload-tokens-list">
                 {{ range .UploadTokens }}
-                <li><code>{{ . }}</code></li>
+                <div class="upload-token-entry">
+                    <div class="info-row">
+                        <div class="nickname">{{ .Nickname }}</div>
+
+                        <div class="extra-info">
+                            {{ if .LastUsed }}
+                            <div>Last used: {{ formatTimeDate .LastUsed }}</div>
+                            {{ else }}
+                            <div>Last used: Never</div>
+                            {{ end }}
+
+                            <form action="/api/account/delete_upload_token" method="POST" enctype="multipart/form-data">
+                                <input type="text" name="upload_token" value="{{ .Token }}" hidden>
+                                <input class="delete-button" type="submit" value="Delete">
+                            </form>
+                        </div>
+                    </div>
+
+                    <div><code>{{ .Token }}</code></div>
+                </div>
                 {{ end }}
-            </ul>
+            </div>
+            {{ end }}
         </div>
 
         <div id="invite-codes" class="setting-group">
             <h2>Invite codes</h2>
+
+            <p>Shareable account registration codes on your account. You are soley responsible for any users you invite.</p>
+
             <div class="codes">
                 {{ range .InviteCodes }}
                 <div class="code">
@@ -91,6 +118,11 @@
                     <div class="info">
                         <div>Uses left {{ .Uses }}</div>
                         <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+
+                        <form action="/api/account/delete_invite_code" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="invite_code" value="{{ .Code }}" hidden>
+                            <input class="delete-button" type="submit" value="Delete">
+                        </form>
                     </div>
                 </div>
                 {{ end }}
@@ -113,7 +145,7 @@
                 <form action="/api/account/delete" method="POST" enctype="multipart/form-data">
                     <input type="submit" value="Delete my account">
                 </form>
-                <form action="/api/account/delete_images" method="POST" enctype="multipart/form-data">
+                <form action="/api/account/delete_all_images" method="POST" enctype="multipart/form-data">
                     <input type="submit" value="Delete all images">
                 </form>
             </div>

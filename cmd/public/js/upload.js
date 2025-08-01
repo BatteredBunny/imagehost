@@ -31,32 +31,40 @@ function showFilePreview(file) {
     fileDropZone.classList.add("file-selected");
 }
 
-fileDropZone.addEventListener('click', () => {
+fileDropZone.addEventListener("click", () => {
     fileInput.click();
 });
 
-fileInput.addEventListener('change', (e) => {
+fileInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
         showFilePreview(file);
     }
 });
 
-fileDropZone.addEventListener('dragover', (e) => {
+fileDropZone.addEventListener("dragover", (e) => {
     e.preventDefault();
-    fileDropZone.classList.add('drag-over');
+    fileDropZone.classList.add("drag-over");
 });
 
-fileDropZone.addEventListener('dragleave', (e) => {
+fileDropZone.addEventListener("dragleave", (e) => {
     e.preventDefault();
-    fileDropZone.classList.remove('drag-over');
+    fileDropZone.classList.remove("drag-over");
 });
 
-fileDropZone.addEventListener('drop', (e) => {
+fileDropZone.addEventListener("drop", (e) => {
     e.preventDefault();
-    fileDropZone.classList.remove('drag-over');
+    fileDropZone.classList.remove("drag-over");
 
     const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        showFilePreview(files[0]);
+    }
+});
+
+window.addEventListener('paste', e => {
+    const files = e.clipboardData.files;
     if (files.length > 0) {
         fileInput.files = files;
         showFilePreview(files[0]);

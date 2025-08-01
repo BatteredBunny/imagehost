@@ -34,13 +34,13 @@
             {{ end }}
         </div>
 
-        <div id="images" class="setting-group">
+        <div id="files" class="setting-group">
             <h2>Files</h2>
-            <p>{{ .ImagesCount }} files uploaded, totalling {{ .ImagesSize }} bytes</p>
-            <div class="image-grid">
+            <p>{{ .FilesCount }} file{{ if ne .FilesCount 1 }}s{{ end }} uploaded, totalling {{ .FilesSizeTotal }} bytes</p>
+            <div class="file-grid">
                 {{ range .Files }}
-                <div class="image">
-                    <div class="image-content">
+                <div class="file-entry">
+                    <div class="file-content">
                         {{ if mimeIsImage .MimeType }}
                             <img src="/{{ .FileName }}" alt="Uploaded image">
                         {{ else if mimeIsVideo .MimeType }}
@@ -53,16 +53,39 @@
                     </div>
 
                     <div class="info-bar">
-                        {{ if formatTimeDate .ExpiryDate }}
-                            <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
-                        {{ end }}
+                        <div class="info-row">
+                            {{ if formatTimeDate .ExpiryDate }}
+                                <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                            {{ end }}
 
-                        <div>{{ formatTimeDate .CreatedAt }}</div>
-                        <div>Size {{ .FileSize }} bytes</div>
-                        <form action="/api/file/delete" method="POST" enctype="multipart/form-data">
-                            <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                            <input type="submit" value="Delete">
-                        </form>
+                            <div class="views">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#eye" />
+                                </svg>
+                                <span>{{ .Views }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-row info-row-second">
+                            <div class="creation-date">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#clock" />
+                                </svg>
+                                <span>{{ formatTimeDate .CreatedAt }}</span>
+                            </div>
+
+                            <div>
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                                </svg>
+                                <span>{{ .FileSize }} bytes</span>
+                            </div>
+
+                            <form action="/api/file/delete" method="POST" enctype="multipart/form-data">
+                                <input type="text" name="file_name" value="{{ .FileName }}" hidden>
+                                <input class="delete-button" type="submit" value="Delete">
+                            </form>
+                        </div>
                     </div>
                 </div>
                 {{ end }}
@@ -144,10 +167,10 @@
             <h2>Account</h2>
             <div class="account-settings-button-row">
                 <form action="/api/account/delete" method="POST" enctype="multipart/form-data">
-                    <input type="submit" value="Delete my account">
+                    <input class="delete-button" type="submit" value="Delete my account">
                 </form>
-                <form action="/api/account/delete_all_images" method="POST" enctype="multipart/form-data">
-                    <input type="submit" value="Delete all images">
+                <form action="/api/account/delete_all_files" method="POST" enctype="multipart/form-data">
+                    <input class="delete-button"  type="submit" value="Delete all images">
                 </form>
             </div>
         </div>

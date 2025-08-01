@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"crypto/rand"
+	"crypto/sha1"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Database struct {
@@ -57,7 +59,7 @@ type SessionTokens struct {
 	Account   Accounts `gorm:"foreignKey:AccountID"`
 }
 
-type Images struct {
+type Files struct {
 	gorm.Model
 
 	ID uint `gorm:"primaryKey"`
@@ -66,16 +68,35 @@ type Images struct {
 	FileSize uint
 	MimeType string
 
-	ExpiryDate time.Time `gorm:"default:null"` // Time when the image will be deleted
+	ExpiryDate time.Time `gorm:"default:null"` // Time when the file will be deleted
 
 	UploaderID uint
 	Uploader   Accounts `gorm:"foreignKey:UploaderID"`
 }
 
+type FileViews struct {
+	gorm.Model
+
+	// Each IP counts once as a view
+	IpHash string `gorm:"index:,unique,composite:hash_collision"`
+
+	FilesID uint `gorm:"index:,unique,composite:hash_collision"`
+
+	// TODO: fix constraint deletion
+	Files Files `gorm:"foreignKey:FilesID;constraint:OnDelete:CASCADE"`
+}
+
+// Doesn't work
+func (f *Files) AfterDelete(db *gorm.DB) (err error) {
+	err = db.Where("files_id = ?", f.ID).
+		Delete(&FileViews{}).Error
+	return
+}
+
 type InviteCodes struct {
 	gorm.Model
 
-	ID          uint // Internal numeric image id
+	ID          uint `gorm:"primaryKey"`
 	Code        string
 	Uses        uint // How many usages of this code is left
 	ExpiryDate  time.Time
@@ -107,7 +128,8 @@ func prepareDB(c Config) (database Database) {
 
 	if err := database.DB.AutoMigrate(
 		&Accounts{},
-		&Images{},
+		&Files{},
+		&FileViews{},
 		&InviteCodes{},
 		&SessionTokens{},
 		&UploadTokens{},
@@ -133,6 +155,14 @@ func prepareDB(c Config) (database Database) {
 
 		log.Warn().Msgf("No accounts found, please create your account via this registration token: %s", inviteCode.Code)
 	}
+
+	return
+}
+
+func (db *Database) getFileViews(fileID uint) (count int64, err error) {
+	err = db.Model(&FileViews{}).
+		Where(&FileViews{FilesID: fileID}).
+		Count(&count).Error
 
 	return
 }
@@ -257,8 +287,8 @@ func (db *Database) getAccountBySessionToken(sessionToken uuid.UUID) (account Ac
 	return
 }
 
-// Deletes image entry from database
-func (db *Database) deleteImage(fileName string, uploadToken uuid.NullUUID, sessionToken uuid.NullUUID) (err error) {
+// Deletes file entry from database
+func (db *Database) deleteFile(fileName string, uploadToken uuid.NullUUID, sessionToken uuid.NullUUID) (err error) {
 	var account Accounts
 	if uploadToken.Valid {
 		account, err = db.getAccountByUploadToken(uploadToken.UUID)
@@ -275,9 +305,9 @@ func (db *Database) deleteImage(fileName string, uploadToken uuid.NullUUID, sess
 		return ErrNotAuthenticated
 	}
 
-	return db.Model(&Images{}).
-		Where(&Images{FileName: fileName, UploaderID: account.ID}).
-		Delete(&Images{}).Error
+	return db.Model(&Files{}).
+		Where(&Files{FileName: fileName, UploaderID: account.ID}).
+		Delete(&Files{}).Error
 }
 
 func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Accounts, err error) {
@@ -302,8 +332,8 @@ func (db *Database) getAccountByUploadToken(uploadToken uuid.UUID) (account Acco
 	return
 }
 
-type CreateImageEntryInput struct {
-	image Images
+type CreateFileEntryInput struct {
+	files Files
 
 	uploadToken  uuid.NullUUID
 	sessionToken uuid.NullUUID
@@ -311,8 +341,8 @@ type CreateImageEntryInput struct {
 
 var ErrNotAuthenticated = errors.New("not authenticated")
 
-// Creates image entry in database
-func (db *Database) createImageEntry(input CreateImageEntryInput) (err error) {
+// Creates file entry in database
+func (db *Database) createFileEntry(input CreateFileEntryInput) (err error) {
 	var account Accounts
 	if input.sessionToken.Valid {
 		account, err = db.getAccountBySessionToken(input.sessionToken.UUID)
@@ -329,14 +359,14 @@ func (db *Database) createImageEntry(input CreateImageEntryInput) (err error) {
 		return ErrNotAuthenticated
 	}
 
-	input.image.UploaderID = account.ID
+	input.files.UploaderID = account.ID
 
-	return db.Model(&Images{}).Create(&input.image).Error
+	return db.Model(&Files{}).Create(&input.files).Error
 }
 
 // Only deletes database entry, actual file has to be deleted as well
-func (db *Database) deleteImagesFromAccount(userID uint) (err error) {
-	return db.Where(&Images{UploaderID: userID}).Delete(&Images{}).Error
+func (db *Database) deleteFilesFromAccount(userID uint) (err error) {
+	return db.Where(&Files{UploaderID: userID}).Delete(&Files{}).Error
 }
 
 func (db *Database) deleteSessionTokensFromAccount(userID uint) (err error) {
@@ -373,20 +403,20 @@ func (db *Database) getAccounts() (users []Accounts, err error) {
 	return
 }
 
-func (db *Database) imagesAmountOnAccount(accountID uint) (count int64, err error) {
-	err = db.Model(&Images{}).
-		Where(&Images{UploaderID: accountID}).
+func (db *Database) filesAmountOnAccount(accountID uint) (count int64, err error) {
+	err = db.Model(&Files{}).
+		Where(&Files{UploaderID: accountID}).
 		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Count(&count).Error
 
 	return
 }
 
-func (db *Database) getAllImagesFromAccount(userID uint) (images []Images, err error) {
-	err = db.Model(&Images{}).
-		Where(&Images{UploaderID: userID}).
+func (db *Database) getAllFilesFromAccount(userID uint) (files []Files, err error) {
+	err = db.Model(&Files{}).
+		Where(&Files{UploaderID: userID}).
 		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
-		Find(&images).Error
+		Find(&files).Error
 
 	return
 }
@@ -402,14 +432,35 @@ func (db *Database) getAccountByID(accountID uint) (account Accounts, err error)
 // Looks if file exists in database
 func (db *Database) fileExists(fileName string) (bool, error) {
 	var count int64
-	if err := db.Model(&Images{}).
-		Where(&Images{FileName: fileName}).
+	if err := db.Model(&Files{}).
+		Where(&Files{FileName: fileName}).
 		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Count(&count).Error; err != nil {
 		return false, err
 	}
 
 	return count > 0, nil
+}
+
+func (db *Database) bumpFileViews(fileName string, ip string) (err error) {
+	h := sha1.New()
+	h.Write([]byte(ip))
+	ipHash := string(h.Sum(nil))
+
+	var fileID uint
+	if err = db.Model(&Files{}).
+		Where(&Files{FileName: fileName}).
+		Select("id").
+		Scan(&fileID).Error; err != nil {
+		return
+	}
+
+	return db.Model(&FileViews{}).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(&FileViews{
+			IpHash:  ipHash,
+			FilesID: fileID,
+		}).Error
 }
 
 func (db *Database) createSessionToken(userID uint) (sessionToken uuid.UUID, err error) {
@@ -485,18 +536,18 @@ func (db *Database) deleteUploadToken(userID uint, uploadToken uuid.UUID) (err e
 		Delete(&UploadTokens{}).Error
 }
 
-func (db *Database) findExpiredImages() (images []Images, err error) {
-	err = db.Model(&Images{}).
+func (db *Database) findExpiredFiles() (files []Files, err error) {
+	err = db.Model(&Files{}).
 		Where("expiry_date not null AND expiry_date < ?", time.Now()).
-		Find(&images).Error
+		Find(&files).Error
 
 	return
 }
 
-func (db *Database) deleteExpiredImages() (err error) {
-	return db.Model(&Images{}).
+func (db *Database) deleteExpiredFiles() (err error) {
+	return db.Model(&Files{}).
 		Where("expiry_date not null AND expiry_date < ?", time.Now()).
-		Delete(&Images{}).Error
+		Delete(&Files{}).Error
 }
 
 func (db *Database) deleteExpiredSessionTokens() (err error) {

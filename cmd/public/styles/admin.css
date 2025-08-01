@@ -53,17 +53,8 @@
                         border-right: 1px solid var(--menu-border-color);
                         flex: 1;
 
-                        align-self: center;
-
-                        svg {
-                            vertical-align: middle;
-                            margin-left: 2px;
-                        }
-
-                        div {
-                            display: inline-block;
-                            vertical-align: middle;
-                        }
+                        gap: 2px;
+                        align-items: center;
                     }
 
                     .value {

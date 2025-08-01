@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -46,7 +47,7 @@ type AccountStats struct {
 }
 
 func (app *Application) toAccountStats(account *Accounts, requesterAccountID uint) (stats AccountStats, err error) {
-	images, err := app.db.getAllImagesFromAccount(account.ID)
+	files, err := app.db.getAllFilesFromAccount(account.ID)
 	if err != nil {
 		return
 	}
@@ -72,8 +73,8 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 		stats.InvitedBy = strconv.Itoa(int(account.InvitedBy))
 	}
 
-	for _, image := range images {
-		stats.SpaceUsed += int64(image.FileSize)
+	for _, file := range files {
+		stats.SpaceUsed += int64(file.FileSize)
 		stats.FilesUploaded++
 	}
 
@@ -133,6 +134,11 @@ func (app *Application) adminPage(c *gin.Context) {
 	}
 }
 
+type UiFile struct {
+	Files
+	Views uint
+}
+
 func (app *Application) userPage(c *gin.Context) {
 	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
@@ -163,17 +169,27 @@ func (app *Application) userPage(c *gin.Context) {
 			return
 		}
 
-		var images []Images
-		images, err = app.db.getAllImagesFromAccount(account.ID)
+		var rawFiles []Files
+		rawFiles, err = app.db.getAllFilesFromAccount(account.ID)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
-		templateInput["Files"] = images
-		templateInput["ImagesCount"] = len(images)
-		templateInput["ImagesSize"] = Sum(images, func(image Images) int {
-			return int(image.FileSize)
+		var files []UiFile
+		for _, file := range rawFiles {
+			count, err := app.db.getFileViews(file.ID)
+			if err != nil {
+				log.Err(err).Msg("Failed to determine file views")
+			}
+
+			files = append(files, UiFile{Files: file, Views: uint(count)})
+		}
+
+		templateInput["Files"] = files
+		templateInput["FilesCount"] = len(files)
+		templateInput["FilesSizeTotal"] = Sum(files, func(file UiFile) int {
+			return int(file.FileSize)
 		})
 
 		uploadTokens, err := app.db.getUploadTokens(account.ID)
@@ -227,6 +243,12 @@ func (app *Application) registerPage(c *gin.Context) {
 func (app *Application) indexFiles(c *gin.Context) {
 	c.Status(http.StatusOK)
 
+	// Probably better ways to do this
+	if strings.HasPrefix(c.Request.URL.Path, "/api") {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	// Looks if file exists in public folder then redirects there
 	filePath := filepath.Join("public", path.Clean(c.Request.URL.Path))
 	if file, err := publicFiles.Open(filePath); err == nil {
@@ -236,13 +258,18 @@ func (app *Application) indexFiles(c *gin.Context) {
 	}
 
 	// Looks in database for uploaded file
-	if exists, err := app.db.fileExists(path.Base(path.Clean(c.Request.URL.Path))); err != nil {
+	fileName := path.Base(path.Clean(c.Request.URL.Path))
+	if exists, err := app.db.fileExists(fileName); err != nil {
 		log.Err(err).Msg("Failed to check if file exists")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	} else if !exists {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
+	}
+
+	if err := app.db.bumpFileViews(fileName, c.ClientIP()); err != nil {
+		log.Err(err).Msg("Failed to bump file views")
 	}
 
 	switch app.config.fileStorageMethod {
@@ -380,7 +407,7 @@ func (app *Application) deleteInviteCodeAPI(c *gin.Context) {
 	c.String(http.StatusOK, "Invite code deleted successfully")
 }
 
-func (app *Application) deleteImagesAPI(c *gin.Context) {
+func (app *Application) deleteFilesAPI(c *gin.Context) {
 	sessionToken, exists := c.Get("sessionToken")
 	if !exists {
 		c.AbortWithStatus(http.StatusUnauthorized)
@@ -397,22 +424,22 @@ func (app *Application) deleteImagesAPI(c *gin.Context) {
 		return
 	}
 
-	images, err := app.db.getAllImagesFromAccount(account.ID)
+	files, err := app.db.getAllFilesFromAccount(account.ID)
 	if err != nil {
 		return
 	}
 
-	for _, image := range images {
-		if err = app.deleteFile(image.FileName); err != nil {
-			log.Err(err).Msg("Failed to delete image")
+	for _, file := range files {
+		if err = app.deleteFile(file.FileName); err != nil {
+			log.Err(err).Msg("Failed to delete file")
 		}
 	}
 
-	if err := app.db.deleteImagesFromAccount(account.ID); err != nil {
-		log.Err(err).Msg("Failed to delete images")
+	if err := app.db.deleteFilesFromAccount(account.ID); err != nil {
+		log.Err(err).Msg("Failed to delete file")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.String(http.StatusOK, "Images deleted")
+	c.String(http.StatusOK, "Files deleted")
 }

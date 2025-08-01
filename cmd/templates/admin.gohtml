@@ -37,7 +37,7 @@
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#github" />
                                     </svg>
-                                    <div>Github</div>
+                                    <span>Github</s>
                                 </div>
                                 <div class="value">{{ .GithubUsername }}</div>
                             </div>
@@ -46,7 +46,7 @@
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#calendar" />
                                     </svg>
-                                    <div>Creation</div>
+                                    <span>Creation</span>
                                 </div>
                                 <div class="value">{{ formatTimeDate .CreatedAt }}</div>
                             </div>
@@ -55,7 +55,7 @@
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#user" />
                                     </svg>
-                                    <div>Invited by</div>
+                                    <span>Invited by</span>
                                 </div>
                                 <div class="value">{{ .InvitedBy }}</div>
                             </div>
@@ -64,7 +64,7 @@
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#hard-drive" />
                                     </svg>
-                                    <div>Space used</div>
+                                    <span>Space used</span>
                                 </div>
                                 <div class="value">{{ .SpaceUsed }} bytes</div>
                             </div>
@@ -73,7 +73,7 @@
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#file" />
                                     </svg>
-                                    <div>Files uploaded</div>
+                                    <span>Files uploaded</span>
                                 </div>
                                 <div class="value">{{ .FilesUploaded }}</div>
                             </div>
@@ -84,11 +84,11 @@
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
                                 <button class="delete-button" type="submit">Delete user</button>
                             </form>
-                            <form method="POST" enctype="multipart/form-data">
+                            <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
                                 <button class="delete-button" type="submit">Delete files</button>
                             </form>
-                            <form method="POST" enctype="multipart/form-data">
+                            <form action="/api/admin/delete_tokens" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
                                 <button class="delete-button" type="submit">Delete all tokens</button>
                             </form>

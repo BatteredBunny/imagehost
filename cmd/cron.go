@@ -41,26 +41,26 @@ func (app *Application) CleanUpJob() {
 		log.Err(err).Msg("Failed to delete expired invite codes")
 	}
 
-	images, err := app.db.findExpiredImages()
+	files, err := app.db.findExpiredFiles()
 	if err != nil {
-		log.Err(err).Msg("Failed to find expired images")
+		log.Err(err).Msg("Failed to find expired files")
 		return
 	}
 
-	if len(images) == 0 {
+	if len(files) == 0 {
 		return
 	}
 
-	log.Info().Msgf("Found %d expired images", len(images))
+	log.Info().Msgf("Found %d expired files", len(files))
 
-	for _, image := range images {
-		if err = app.deleteFile(image.FileName); err != nil {
-			log.Err(err).Msg("Failed to delete image file")
+	for _, file := range files {
+		if err = app.deleteFile(file.FileName); err != nil {
+			log.Err(err).Msg("Failed to delete file")
 		}
 	}
 
-	if err = app.db.deleteExpiredImages(); err != nil {
-		log.Err(err).Msg("Failed to delete image entries in database")
+	if err = app.db.deleteExpiredFiles(); err != nil {
+		log.Err(err).Msg("Failed to delete file entries in database")
 		return
 	}
 }

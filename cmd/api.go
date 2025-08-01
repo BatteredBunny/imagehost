@@ -56,18 +56,18 @@ func (app *Application) deleteAccount(userID uint) (err error) {
 		return
 	}
 
-	images, err := app.db.getAllImagesFromAccount(userID)
+	files, err := app.db.getAllFilesFromAccount(userID)
 	if err != nil {
 		return
 	}
 
-	for _, image := range images {
-		if err = app.deleteFile(image.FileName); err != nil {
-			log.Err(err).Msg("Failed to delete image")
+	for _, file := range files {
+		if err = app.deleteFile(file.FileName); err != nil {
+			log.Err(err).Msg("Failed to delete file")
 		}
 	}
 
-	if err = app.db.deleteImagesFromAccount(userID); err != nil {
+	if err = app.db.deleteFilesFromAccount(userID); err != nil {
 		return
 	}
 
@@ -78,13 +78,13 @@ func (app *Application) deleteAccount(userID uint) (err error) {
 	return
 }
 
-// Api for deleting an image from your account
-type deleteImageAPIInput struct {
+// Api for deleting a file from your account
+type deleteFileAPIInput struct {
 	FileName string `form:"file_name"`
 }
 
-func (app *Application) deleteImageAPI(c *gin.Context) {
-	var input deleteImageAPIInput
+func (app *Application) deleteFileAPI(c *gin.Context) {
+	var input deleteFileAPIInput
 	var err error
 
 	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
@@ -112,7 +112,7 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 		return
 	}
 
-	// Makes sure the image exists
+	// Makes sure the file exists
 	var exists bool
 	if exists, err = app.db.fileExists(input.FileName); err != nil {
 		log.Err(err).Msg("Failed to check if file exists")
@@ -130,24 +130,24 @@ func (app *Application) deleteImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.deleteImage(input.FileName, uploadToken, sessionToken); err != nil { // Deletes file entry from database
-		log.Err(err).Msg("Failed to delete image entry")
+	if err = app.db.deleteFile(input.FileName, uploadToken, sessionToken); err != nil { // Deletes file entry from database
+		log.Err(err).Msg("Failed to delete file entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.String(http.StatusOK, "Successfully deleted the image")
+	c.String(http.StatusOK, "Successfully deleted the file")
 }
 
 /*
-Api for uploading image
+Api for uploading file
 curl -F 'upload_token=1234567890' -F 'file=@yourfile.png'
 
 Additional inputs:
 expiry_timestamp: unix timestamp in seconds
 expiry_date: YYYY-MM-DD in string, expiry_timestamp gets priority
 */
-func (app *Application) uploadImageAPI(c *gin.Context) {
+func (app *Application) uploadFileAPI(c *gin.Context) {
 	var expiryDate time.Time
 
 	date, exists := c.GetPostForm("expiry_date")
@@ -197,8 +197,8 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	input := CreateImageEntryInput{
-		image: Images{
+	input := CreateFileEntryInput{
+		files: Files{
 			FileName:   fullFileName,
 			FileSize:   uint(len(file)),
 			MimeType:   mime.String(),
@@ -224,11 +224,11 @@ func (app *Application) uploadImageAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.createImageEntry(input); errors.Is(err, gorm.ErrRecordNotFound) {
+	if err = app.db.createFileEntry(input); errors.Is(err, gorm.ErrRecordNotFound) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else if err != nil {
-		log.Err(err).Msg("Failed to create image entry")
+		log.Err(err).Msg("Failed to create file entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

@@ -61,8 +61,8 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 		app.hasUploadOrSessionTokenMiddleware(),
 	)
 
-	fileAPI.POST("/upload", app.uploadImageAPI)
-	fileAPI.POST("/delete", app.deleteImageAPI)
+	fileAPI.POST("/upload", app.uploadFileAPI)
+	fileAPI.POST("/delete", app.deleteFileAPI)
 	// ---
 
 	// Accounts for managing your user
@@ -77,7 +77,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	accountAPI.POST("/delete_upload_token", app.deleteUploadTokenAPI)
 	accountAPI.POST("/new_invite_code", app.newInviteCodeApi)
 	accountAPI.POST("/delete_invite_code", app.deleteInviteCodeAPI)
-	accountAPI.POST("/delete_all_images", app.deleteImagesAPI)
+	accountAPI.POST("/delete_all_files", app.deleteFilesAPI)
 	// ---
 
 	// Admin apis
@@ -88,6 +88,10 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	)
 
 	adminAPI.POST("/delete_user", app.adminDeleteUser)
+
+	// TODO: implement
+	// adminAPI.POST("/delete_files", app.adminDeleteFiles)
+	// adminAPI.POST("/delete_tokens", app.adminDeleteTokens)
 
 	app.Router.StaticFS("/public/", PublicFiles())
 

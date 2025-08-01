@@ -65,7 +65,6 @@ func (app *Application) parseSessionTokenFromForm(c *gin.Context) (sessionToken 
 func (app *Application) parseSessionTokenFromCookieOrForm(c *gin.Context) (sessionToken uuid.UUID, err error) {
 	sessionToken, err = app.parseAuthCookie(c)
 	if err != nil {
-		err = nil
 		sessionToken, err = app.parseSessionTokenFromForm(c)
 	}
 

@@ -1,11 +1,11 @@
 
-#images {
-    .image-grid {
+#files {
+    .file-grid {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
 
-        .image {
+        .file-entry {
             display: flex;
             flex-direction: column;
             flex: 1 1 300px;
@@ -13,7 +13,7 @@
             border: 1px solid var(--menu-border-color);
             border-radius: 5px;
 
-            .image-content {
+            .file-content {
                 img,
                 video {
                     max-width: 300px;
@@ -24,12 +24,30 @@
 
             .info-bar {
                 display: flex;
+                flex-direction: row;
                 flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: center;
-                padding: 5px;
                 border-top: 1px solid var(--menu-border-color);
+                justify-content: space-between;
                 gap: 5px;
+
+                .info-row-second {
+                    border-left: 1px solid var(--menu-border-color);
+                }
+
+                .info-row {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 5px;
+
+                    div {
+                        gap: 5px;
+                        align-items: center;
+                    }
+
+                    form {
+                        margin-top: 3px;
+                    }
+                }
             }
         }
     }

@@ -36,7 +36,7 @@
 
         <div id="files" class="setting-group">
             <h2>Files</h2>
-            <p>{{ .FilesCount }} file{{ if ne .FilesCount 1 }}s{{ end }} uploaded, totalling {{ .FilesSizeTotal }} bytes</p>
+            <p>{{ .FilesCount }} file{{ if ne .FilesCount 1 }}s{{ end }} uploaded, totalling <span title="{{ .FilesSizeTotal }} bytes">{{ humanizeBytes .FilesSizeTotal }}</span></p>
             <div class="file-grid">
                 {{ range .Files }}
                 <div class="file-entry">
@@ -57,7 +57,7 @@
                     <div class="info-bar">
                         <div class="info-row">
                             {{ if formatTimeDate .ExpiryDate }}
-                                <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                                <div>Expires <span title="{{ formatTimeDate .ExpiryDate }}">{{ relativeTime .ExpiryDate }}</span></div>
                             {{ end }}
 
                             <div class="views">
@@ -73,14 +73,14 @@
                                 <svg class="feather-icon">
                                     <use href="/public/assets/feather-sprite.svg#clock" />
                                 </svg>
-                                <span>{{ formatTimeDate .CreatedAt }}</span>
+                                <span title="{{ formatTimeDate .CreatedAt }}">{{ relativeTime .CreatedAt }}</span>
                             </div>
 
                             <div>
                                 <svg class="feather-icon">
                                     <use href="/public/assets/feather-sprite.svg#hard-drive" />
                                 </svg>
-                                <span>{{ .FileSize }} bytes</span>
+                                <span title="{{ .FileSize }} bytes">{{ humanizeBytes .FileSize }}</span>
                             </div>
 
                             <form action="/api/file/delete" method="POST" enctype="multipart/form-data">
@@ -113,7 +113,7 @@
 
                         <div class="extra-info">
                             {{ if .LastUsed }}
-                            <div>Last used: {{ formatTimeDate .LastUsed }}</div>
+                            <div>Last used: <span title="{{ formatTimeDate .LastUsed }}">{{ relativeTime .LastUsed }}</span></div>
                             {{ else }}
                             <div>Last used: Never</div>
                             {{ end }}

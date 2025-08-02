@@ -40,6 +40,8 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 
 	templates := template.Must(template.New("").Funcs(template.FuncMap{
 		"formatTimeDate": formatTimeDate,
+		"relativeTime":   relativeTime,
+		"humanizeBytes":  humanizeBytes,
 		"mimeIsImage":    mimeIsImage,
 		"mimeIsVideo":    mimeIsVideo,
 		"mimeIsAudio":    mimeIsAudio,

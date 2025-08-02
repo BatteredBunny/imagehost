@@ -42,7 +42,7 @@ func (app *Application) indexPage(c *gin.Context) {
 type AccountStats struct {
 	Accounts
 
-	SpaceUsed         int64
+	SpaceUsed         uint
 	InvitedBy         string
 	FilesUploaded     int64
 	You               bool
@@ -59,9 +59,6 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 
 	stats = AccountStats{
 		Accounts:      *account,
-		SpaceUsed:     0,
-		InvitedBy:     "",
-		FilesUploaded: 0,
 		You:           account.ID == requesterAccountID,
 	}
 
@@ -94,7 +91,7 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 	}
 
 	for _, file := range files {
-		stats.SpaceUsed += int64(file.FileSize)
+		stats.SpaceUsed += file.FileSize
 		stats.FilesUploaded++
 	}
 
@@ -208,9 +205,9 @@ func (app *Application) userPage(c *gin.Context) {
 
 		templateInput["Files"] = files
 		templateInput["FilesCount"] = len(files)
-		templateInput["FilesSizeTotal"] = Sum(files, func(file UiFile) int {
+		templateInput["FilesSizeTotal"] = uint(Sum(files, func(file UiFile) int {
 			return int(file.FileSize)
-		})
+		}))
 
 		uploadTokens, err := app.db.getUploadTokens(account.ID)
 		if err != nil {

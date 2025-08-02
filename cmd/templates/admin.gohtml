@@ -48,7 +48,7 @@
                                     </svg>
                                     <span>Creation</span>
                                 </div>
-                                <div class="value">{{ formatTimeDate .CreatedAt }}</div>
+                                <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
                             </div>
                             <div class="entry">
                                 <div class="name">
@@ -57,7 +57,7 @@
                                     </svg>
                                     <span>Last activity</span>
                                 </div>
-                                <div class="value">{{ formatTimeDate .LastActivity }}</div>
+                                <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})</div>
                             </div>
                             <div class="entry">
                                 <div class="name">
@@ -75,7 +75,7 @@
                                     </svg>
                                     <span>Space used</span>
                                 </div>
-                                <div class="value">{{ .SpaceUsed }} bytes</div>
+                                <div class="value" title="{{ .SpaceUsed }} bytes">{{ humanizeBytes .SpaceUsed }}</div>
                             </div>
                             <div class="entry">
                                 <div class="name">

@@ -42,13 +42,15 @@
                 <div class="file-entry">
                     <div class="file-content">
                         {{ if mimeIsImage .MimeType }}
-                            <img src="/{{ .FileName }}" alt="Uploaded image">
+                            <a href="/{{ .FileName }}">
+                                <img src="/{{ .FileName }}" alt="Uploaded image">
+                            </a>
                         {{ else if mimeIsVideo .MimeType }}
                             <video src="/{{ .FileName }}" alt="Uploaded video" controls>
                         {{ else if mimeIsAudio .MimeType }}
                             <audio src="/{{ .FileName }}" controls>
                         {{ else }}
-                            <a href="/{{ .FileName }}" alt="Uploaded file">{{ .FileName }}</a>
+                            <a href="/{{ .FileName }}">{{ .FileName }}</a>
                         {{ end }}
                     </div>
 

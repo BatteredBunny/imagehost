@@ -23,106 +23,106 @@
             <div>Max upload size: <span title="{{ .MaxUploadSize }} bytes">{{ humanizeBytes .MaxUploadSize }}</span></div>
         </div>
 
-       <div id="users-panel" class="setting-group">
+        <div id="users-panel" class="setting-group">
             <h2>Users</h2>
             <div class="users-grid">
                 {{ range .Users }}
-                    <div class="user-card">
-                        <div class="top-row">
-                            <div class="left">User {{ .ID }}</div>
-                            <div class="right">
-                                {{ if .You }}<div class="badge">You</div>{{ end }}
-                                <div class="badge">{{ .AccountType }}</div>
-                            </div>
-                        </div>
-
-                        <div class="middle-row">
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#github" />
-                                    </svg>
-                                    <span>Github</s>
-                                </div>
-                                <div class="value">{{ .GithubUsername }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#calendar" />
-                                    </svg>
-                                    <span>Creation</span>
-                                </div>
-                                <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#calendar" />
-                                    </svg>
-                                    <span>Last activity</span>
-                                </div>
-                                <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#user" />
-                                    </svg>
-                                    <span>Invited by</span>
-                                </div>
-                                <div class="value">{{ .InvitedBy }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#hard-drive" />
-                                    </svg>
-                                    <span>Space used</span>
-                                </div>
-                                <div class="value" title="{{ .SpaceUsed }} bytes">{{ humanizeBytes .SpaceUsed }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#file" />
-                                    </svg>
-                                    <span>Files uploaded</span>
-                                </div>
-                                <div class="value">{{ .FilesUploaded }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#key" />
-                                    </svg>
-                                    <span>Sessions/Upload tokens</span>
-                                </div>
-                                <div class="value">{{ .SessionsCount }}/{{ .UploadTokensCount }}</div>
-                            </div>
-                        </div>
-
-                        <div class="bottom-row">
-                            {{ if not .You }}
-                            <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit">Delete user</button>
-                            </form>
-                            {{ end }}
-                            <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit">Delete files</button>
-                            </form>
-                            <form action="/api/admin/delete_sessions" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit">Delete sessions</button>
-                            </form>
-                            <form action="/api/admin/delete_upload_tokens" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit">Delete upload tokens</button>
-                            </form>
+                <div class="user-card">
+                    <div class="top-row">
+                        <div class="left">User {{ .ID }}</div>
+                        <div class="right">
+                            {{ if .You }}<div class="badge">You</div>{{ end }}
+                            <div class="badge">{{ .AccountType }}</div>
                         </div>
                     </div>
+
+                    <div class="middle-row">
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#github" />
+                                </svg>
+                                <span>Github</s>
+                            </div>
+                            <div class="value">{{ .GithubUsername }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#calendar" />
+                                </svg>
+                                <span>Creation</span>
+                            </div>
+                            <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#calendar" />
+                                </svg>
+                                <span>Last activity</span>
+                            </div>
+                            <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#user" />
+                                </svg>
+                                <span>Invited by</span>
+                            </div>
+                            <div class="value">{{ .InvitedBy }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                                </svg>
+                                <span>Space used</span>
+                            </div>
+                            <div class="value" title="{{ .SpaceUsed }} bytes">{{ humanizeBytes .SpaceUsed }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#file" />
+                                </svg>
+                                <span>Files uploaded</span>
+                            </div>
+                            <div class="value">{{ .FilesUploaded }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="name">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#key" />
+                                </svg>
+                                <span>Sessions/Upload tokens</span>
+                            </div>
+                            <div class="value">{{ .SessionsCount }}/{{ .UploadTokensCount }}</div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-row">
+                        {{ if not .You }}
+                        <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="id" value="{{ .ID }}" hidden>
+                            <button class="delete-button" type="submit">Delete user</button>
+                        </form>
+                        {{ end }}
+                        <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="id" value="{{ .ID }}" hidden>
+                            <button class="delete-button" type="submit">Delete files</button>
+                        </form>
+                        <form action="/api/admin/delete_sessions" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="id" value="{{ .ID }}" hidden>
+                            <button class="delete-button" type="submit">Delete sessions</button>
+                        </form>
+                        <form action="/api/admin/delete_upload_tokens" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="id" value="{{ .ID }}" hidden>
+                            <button class="delete-button" type="submit">Delete upload tokens</button>
+                        </form>
+                    </div>
+                </div>
                 {{ end }}
             </div>
         </div>

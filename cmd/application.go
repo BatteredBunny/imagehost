@@ -29,7 +29,7 @@ const (
 
 type Config struct {
 	DataFolder            string `toml:"data_folder"`
-	MaxUploadSize         uint   `toml:"max_upload_size"`
+	MaxUploadSize         int64  `toml:"max_upload_size"`
 	DatabaseType          string `toml:"database_type"`
 	DatabaseConnectionUrl string `toml:"database_connection_url"`
 	Port                  string `toml:"port"`

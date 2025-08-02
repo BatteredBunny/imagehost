@@ -83,6 +83,11 @@ func initializeConfig() (c Config) {
 		c.fileStorageMethod = fileStorageLocal
 	}
 
+	if c.MaxUploadSize <= 0 {
+		log.Warn().Msgf("Max upload size of %d is not allowed", c.MaxUploadSize)
+		c.MaxUploadSize = 100 * 1024 * 1024 // 100 MB
+	}
+
 	if c.publicUrl == "" {
 		log.Warn().Msg("Warning no public_url option set in toml, github login might not work")
 		c.publicUrl = fmt.Sprintf("http://localhost:%s", c.Port)

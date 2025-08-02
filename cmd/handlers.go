@@ -58,8 +58,8 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 	}
 
 	stats = AccountStats{
-		Accounts:      *account,
-		You:           account.ID == requesterAccountID,
+		Accounts: *account,
+		You:      account.ID == requesterAccountID,
 	}
 
 	stats.SessionsCount, err = app.db.getSessionsCount(account.ID)
@@ -143,7 +143,7 @@ func (app *Application) adminPage(c *gin.Context) {
 
 		templateInput["Users"] = stats
 
-		templateInput["MaxUploadSize"] = app.config.MaxUploadSize
+		templateInput["MaxUploadSize"] = uint(app.config.MaxUploadSize)
 	}
 
 	if loggedIn {

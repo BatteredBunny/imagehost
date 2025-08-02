@@ -53,6 +53,15 @@
                             <div class="entry">
                                 <div class="name">
                                     <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#calendar" />
+                                    </svg>
+                                    <span>Last activity</span>
+                                </div>
+                                <div class="value">{{ formatTimeDate .LastActivity }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#user" />
                                     </svg>
                                     <span>Invited by</span>
@@ -77,13 +86,24 @@
                                 </div>
                                 <div class="value">{{ .FilesUploaded }}</div>
                             </div>
+                            <div class="entry">
+                                <div class="name">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#key" />
+                                    </svg>
+                                    <span>Sessions/Upload tokens</span>
+                                </div>
+                                <div class="value">{{ .SessionsCount }}/{{ .UploadTokensCount }}</div>
+                            </div>
                         </div>
 
                         <div class="bottom-row">
+                            {{ if not .You }}
                             <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
                                 <button class="delete-button" type="submit">Delete user</button>
                             </form>
+                            {{ end }}
                             <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="id" value="{{ .ID }}" hidden>
                                 <button class="delete-button" type="submit">Delete files</button>

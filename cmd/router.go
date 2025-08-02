@@ -88,9 +88,9 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	)
 
 	adminAPI.POST("/delete_user", app.adminDeleteUser)
+	adminAPI.POST("/delete_files", app.adminDeleteFiles)
 
 	// TODO: implement
-	// adminAPI.POST("/delete_files", app.adminDeleteFiles)
 	// adminAPI.POST("/delete_tokens", app.adminDeleteTokens)
 
 	app.Router.StaticFS("/public/", PublicFiles())

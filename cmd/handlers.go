@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -40,10 +41,14 @@ func (app *Application) indexPage(c *gin.Context) {
 
 type AccountStats struct {
 	Accounts
-	SpaceUsed     int64
-	InvitedBy     string
-	FilesUploaded int64
-	You           bool
+
+	SpaceUsed         int64
+	InvitedBy         string
+	FilesUploaded     int64
+	You               bool
+	SessionsCount     int64
+	UploadTokensCount int64
+	LastActivity      time.Time // Last session or upload token usage
 }
 
 func (app *Application) toAccountStats(account *Accounts, requesterAccountID uint) (stats AccountStats, err error) {
@@ -58,6 +63,21 @@ func (app *Application) toAccountStats(account *Accounts, requesterAccountID uin
 		InvitedBy:     "",
 		FilesUploaded: 0,
 		You:           account.ID == requesterAccountID,
+	}
+
+	stats.SessionsCount, err = app.db.getSessionsCount(account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to get session count")
+	}
+
+	stats.UploadTokensCount, err = app.db.getUploadTokensCount(account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to get upload token count")
+	}
+
+	stats.LastActivity, err = app.db.lastAccountActivity(account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to get last activity")
 	}
 
 	if account.InvitedBy == 0 {
@@ -424,8 +444,22 @@ func (app *Application) deleteFilesAPI(c *gin.Context) {
 		return
 	}
 
-	files, err := app.db.getAllFilesFromAccount(account.ID)
+	if err = app.deleteFilesFromAccount(account.ID); err != nil {
+		log.Err(err).Msg("Failed to delete files from account")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, "Files deleted")
+}
+
+func (app *Application) deleteFilesFromAccount(userID uint) (err error) {
+	files, err := app.db.getAllFilesFromAccount(userID)
 	if err != nil {
+		return
+	}
+
+	if err = app.db.deleteFilesFromAccount(userID); err != nil {
 		return
 	}
 
@@ -435,11 +469,5 @@ func (app *Application) deleteFilesAPI(c *gin.Context) {
 		}
 	}
 
-	if err := app.db.deleteFilesFromAccount(account.ID); err != nil {
-		log.Err(err).Msg("Failed to delete file")
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.String(http.StatusOK, "Files deleted")
+	return
 }

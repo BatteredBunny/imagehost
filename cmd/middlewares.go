@@ -98,7 +98,7 @@ func (app *Application) isAdmin() gin.HandlerFunc {
 		// Verify the field exists
 		sessionToken, exists := c.Get("sessionToken")
 		if !exists {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 

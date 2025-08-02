@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"errors"
 	"strconv"
 	"time"
@@ -52,6 +53,7 @@ type SessionTokens struct {
 
 	ID uint `gorm:"primaryKey"`
 
+	LastUsed   time.Time
 	ExpiryDate time.Time
 	Token      uuid.UUID `gorm:"uniqueIndex"`
 
@@ -88,8 +90,10 @@ type FileViews struct {
 
 // Doesn't work
 func (f *Files) AfterDelete(db *gorm.DB) (err error) {
-	err = db.Where("files_id = ?", f.ID).
+	err = db.Model(&FileViews{}).
+		Where("files_id = ?", f.ID).
 		Delete(&FileViews{}).Error
+
 	return
 }
 
@@ -270,7 +274,51 @@ func (db *Database) useCode(code string) (accountType string, invitedBy uint, er
 	return
 }
 
+// Returns the latest time a session token or an upload token was used
+func (db *Database) lastAccountActivity(accountID uint) (lastActivity time.Time, err error) {
+	var (
+		sessionLastUsed sql.NullTime
+		uploadLastUsed  sql.NullTime
+	)
+
+	if err = db.Model(&SessionTokens{}).
+		Where(&SessionTokens{AccountID: accountID}).
+		Select("last_used").
+		Order("last_used DESC").
+		First(&sessionLastUsed).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return
+	}
+
+	// TODO: somehow hide the error in logs if no upload tokens exist
+	if err = db.Model(&UploadTokens{}).
+		Where(&UploadTokens{AccountID: accountID}).
+		Select("last_used").
+		Order("last_used DESC").
+		First(&uploadLastUsed).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		err = nil
+	} else if err != nil {
+		return
+	}
+
+	if !sessionLastUsed.Valid && !uploadLastUsed.Valid {
+		return time.Time{}, nil // No activity found
+	} else if uploadLastUsed.Valid && uploadLastUsed.Time.After(sessionLastUsed.Time) {
+		lastActivity = uploadLastUsed.Time
+	} else {
+		lastActivity = sessionLastUsed.Time
+	}
+
+	return
+}
+
 func (db *Database) getAccountBySessionToken(sessionToken uuid.UUID) (account Accounts, err error) {
+	if err = db.Model(&SessionTokens{}).
+		Where(&SessionTokens{Token: sessionToken}).
+		Where("expiry_date > ?", time.Now()).
+		Update("last_used", time.Now()).Error; err != nil {
+		log.Err(err).Msg("Failed to update last used time for session token")
+	}
+
 	var accountID uint
 	if err = db.Model(&SessionTokens{}).
 		Where(&SessionTokens{Token: sessionToken}).
@@ -366,24 +414,33 @@ func (db *Database) createFileEntry(input CreateFileEntryInput) (err error) {
 
 // Only deletes database entry, actual file has to be deleted as well
 func (db *Database) deleteFilesFromAccount(userID uint) (err error) {
-	return db.Where(&Files{UploaderID: userID}).Delete(&Files{}).Error
+	return db.Model(&Files{}).
+		Where(&Files{UploaderID: userID}).
+		Delete(&Files{}).Error
 }
 
 func (db *Database) deleteSessionTokensFromAccount(userID uint) (err error) {
-	return db.Where(&SessionTokens{AccountID: userID}).Delete(&SessionTokens{}).Error
+	return db.Model(&SessionTokens{}).
+		Where(&SessionTokens{AccountID: userID}).
+		Delete(&SessionTokens{}).Error
 }
 
 func (db *Database) deleteUploadTokensFromAccount(userID uint) (err error) {
-	return db.Where(&UploadTokens{AccountID: userID}).Delete(&UploadTokens{}).Error
+	return db.Model(&UploadTokens{}).
+		Where(&UploadTokens{AccountID: userID}).
+		Delete(&UploadTokens{}).Error
 }
 
 func (db *Database) deleteInviteCodesFromAccount(userID uint) (err error) {
-	return db.Where(&InviteCodes{InviteCreatorID: userID}).Delete(&InviteCodes{}).Error
+	return db.Model(&InviteCodes{}).
+		Where(&InviteCodes{InviteCreatorID: userID}).
+		Delete(&InviteCodes{}).Error
 }
 
 // Deletes account entry only
 func (db *Database) deleteAccount(userID uint) (err error) {
-	return db.Delete(&Accounts{}, userID).Error
+	return db.Model(&Accounts{}).
+		Delete(&Accounts{}, userID).Error
 }
 
 func (db *Database) inviteCodesByAccount(accountID uint) (inviteCodes []InviteCodes, err error) {
@@ -429,6 +486,23 @@ func (db *Database) getAccountByID(accountID uint) (account Accounts, err error)
 	return
 }
 
+func (db *Database) getSessionsCount(accountID uint) (count int64, err error) {
+	err = db.Model(&SessionTokens{}).
+		Where(&SessionTokens{AccountID: accountID}).
+		Where("expiry_date > ?", time.Now()).
+		Count(&count).Error
+
+	return
+}
+
+func (db *Database) getUploadTokensCount(accountID uint) (count int64, err error) {
+	err = db.Model(&UploadTokens{}).
+		Where(&UploadTokens{AccountID: accountID}).
+		Count(&count).Error
+
+	return
+}
+
 // Looks if file exists in database
 func (db *Database) fileExists(fileName string) (bool, error) {
 	var count int64
@@ -470,6 +544,7 @@ func (db *Database) createSessionToken(userID uint) (sessionToken uuid.UUID, err
 		AccountID:  userID,
 		Token:      uuid.New(),
 		ExpiryDate: time.Now().Add(time.Hour * 24 * 7), // A week from now
+		LastUsed:   time.Now(),
 	}
 
 	if err = db.Model(&SessionTokens{}).Create(&session).Error; err != nil {

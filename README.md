@@ -10,9 +10,10 @@ Main page             | Account page             | Admin page
 - Easy social login via github
 - Account invite codes for enrolling new users
 - Image automatic deletion
-- Seperate upload codes for automation setups (e.g scripts)
+- Seperate upload tokens for automation setups (e.g scripts)
 - Store data locally or on a S3/B2 bucket
 - Sqlite and postgresql support
+- View tracking
 
 # Usage
 

@@ -97,10 +97,10 @@
                         img,
                         video,
                         audio {
-                            max-width: "200px";
-                            max-height: "200px";
+                            max-width: 200px;
+                            max-height: 200px;
                             object-fit: "contain";
-                            border-radius: "5px";
+                            border-radius: 5px;
                         }
                     }
 

@@ -28,7 +28,6 @@
             .info-bar {
                 display: flex;
                 flex-direction: row;
-                flex-wrap: wrap;
                 border-top: 1px solid var(--menu-border-color);
                 justify-content: space-between;
                 gap: 5px;

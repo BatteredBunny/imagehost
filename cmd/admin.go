@@ -74,3 +74,49 @@ func (app *Application) adminDeleteFiles(c *gin.Context) {
 
 	c.String(http.StatusOK, "Files deleted")
 }
+
+type adminDeleteUserSessionsInput struct {
+	ID uint `form:"id"`
+}
+
+func (app *Application) adminDeleteSessions(c *gin.Context) {
+	var (
+		input adminDeleteUserSessionsInput
+		err   error
+	)
+
+	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err = app.db.deleteSessionsFromAccount(input.ID); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.String(http.StatusOK, "Sessions deleted")
+}
+
+type adminDeleteUserUploadTokensInput struct {
+	ID uint `form:"id"`
+}
+
+func (app *Application) adminDeleteUploadTokens(c *gin.Context) {
+	var (
+		input adminDeleteUserUploadTokensInput
+		err   error
+	)
+
+	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err = app.db.deleteUploadTokensFromAccount(input.ID); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.String(http.StatusOK, "Upload tokens deleted")
+}

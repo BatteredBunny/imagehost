@@ -431,6 +431,12 @@ func (db *Database) deleteUploadTokensFromAccount(userID uint) (err error) {
 		Delete(&UploadTokens{}).Error
 }
 
+func (db *Database) deleteSessionsFromAccount(accountID uint) (err error) {
+	return db.Model(&SessionTokens{}).
+		Where(&SessionTokens{AccountID: accountID}).
+		Delete(&SessionTokens{}).Error
+}
+
 func (db *Database) deleteInviteCodesFromAccount(userID uint) (err error) {
 	return db.Model(&InviteCodes{}).
 		Where(&InviteCodes{InviteCreatorID: userID}).

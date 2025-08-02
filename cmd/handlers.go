@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/markbates/goth"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -236,10 +237,17 @@ func (app *Application) loginPage(c *gin.Context) {
 		return
 	}
 
+	var providers []string
+	for _, provider := range goth.GetProviders() {
+		providers = append(providers, provider.Name())
+	}
+
 	if loggedIn {
 		c.Redirect(http.StatusTemporaryRedirect, "/user")
 	} else {
-		c.HTML(http.StatusOK, "login.gohtml", nil)
+		c.HTML(http.StatusOK, "login.gohtml", gin.H{
+			"Providers": providers,
+		})
 	}
 }
 

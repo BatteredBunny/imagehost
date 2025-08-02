@@ -30,12 +30,11 @@ func generateSecureKey(length int) []byte {
 	return key
 }
 
-func (app *Application) setupGithubAuth() {
-	// TODO: this whole thing is very badly made, pls redo
-
+func (app *Application) setupSocialLogin() {
 	githubApiKey := os.Getenv("GITHUB_CLIENT_ID")
 	githubSecret := os.Getenv("GITHUB_SECRET")
 
+	// Goth creates its own cookie for the auth flow
 	gothic.Store = sessions.NewCookieStore(generateSecureKey(32))
 
 	goth.UseProviders(
@@ -44,7 +43,7 @@ func (app *Application) setupGithubAuth() {
 }
 
 func (app *Application) setupAuth(api *gin.RouterGroup) {
-	app.setupGithubAuth()
+	app.setupSocialLogin()
 
 	api.GET("/auth/login/:provider/callback", app.loginCallback)
 	api.GET("/auth/login/:provider", app.loginApi)

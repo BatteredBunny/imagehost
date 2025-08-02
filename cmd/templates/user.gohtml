@@ -28,7 +28,12 @@
             {{ end }}
 
             {{ if .LinkedWithGithub }}
-            <p>Linked with github {{ .GithubUsername }}</p>
+            <a href="https://github.com/{{ .GithubUsername }}" target="_blank" class="linked-account">
+                <svg class="feather-icon">
+                    <use href="/public/assets/feather-sprite.svg#github" />
+                </svg>
+                <span>{{ .GithubUsername }}</span>
+            </a>
             {{ else }}
             <p><a href="/api/auth/link/github">Link with github</a></p>
             {{ end }}

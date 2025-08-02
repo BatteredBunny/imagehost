@@ -27,7 +27,7 @@ func (app *Application) ratelimitMiddleware() gin.HandlerFunc {
 // limits request body size
 func (app *Application) bodySizeMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, app.config.MaxUploadSize)
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, int64(app.config.MaxUploadSize))
 		c.Next()
 	}
 }
@@ -36,7 +36,7 @@ func (app *Application) bodySizeMiddleware() gin.HandlerFunc {
 func (app *Application) apiMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > 0 {
-			if err := c.Request.ParseMultipartForm(app.config.MaxUploadSize); err != nil {
+			if err := c.Request.ParseMultipartForm(int64(app.config.MaxUploadSize)); err != nil {
 				c.String(http.StatusRequestEntityTooLarge, "Too big file")
 				c.Abort()
 				return

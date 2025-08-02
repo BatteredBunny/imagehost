@@ -18,6 +18,11 @@
     <div class="container">
         <h1>Admin</h1>
 
+        <div id="server-config-panel" class="setting-group">
+            <h2>Server configuration</h2>
+            <div>Max upload size: <span title="{{ .MaxUploadSize }} bytes">{{ humanizeBytes .MaxUploadSize }}</span></div>
+        </div>
+
        <div id="users-panel" class="setting-group">
             <h2>Users</h2>
             <div class="users-grid">

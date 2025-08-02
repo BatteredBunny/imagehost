@@ -142,6 +142,8 @@ func (app *Application) adminPage(c *gin.Context) {
 		}
 
 		templateInput["Users"] = stats
+
+		templateInput["MaxUploadSize"] = app.config.MaxUploadSize
 	}
 
 	if loggedIn {

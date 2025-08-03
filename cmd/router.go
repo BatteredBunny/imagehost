@@ -80,6 +80,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	accountAPI.POST("/new_invite_code", app.newInviteCodeApi)
 	accountAPI.POST("/delete_invite_code", app.deleteInviteCodeAPI)
 	accountAPI.POST("/delete_all_files", app.deleteFilesAPI)
+	accountAPI.GET("/files", app.filesAPI)
 	// ---
 
 	// Admin apis

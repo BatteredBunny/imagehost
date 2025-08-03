@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/rs/zerolog/log"
@@ -477,4 +479,71 @@ func (app *Application) deleteFilesFromAccount(userID uint) (err error) {
 	}
 
 	return
+}
+
+type FilesApiInput struct {
+	Skip uint   `form:"skip,default=0"`          // Used for pagination
+	Sort string `form:"sort,default=created_at"` // "created_at", "views", "file_size"
+}
+
+type FilesApiOutput struct {
+	Files []Files `json:"files"`
+	Count int64   `json:"count"`
+}
+
+func (app *Application) filesAPI(c *gin.Context) {
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	var input FilesApiInput
+	if err = c.MustBindWith(&input, binding.Form); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	var allowedSorts = []string{
+		"created_at",
+		"views",
+		"file_size",
+	}
+	if !slices.Contains(allowedSorts, input.Sort) {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Api returns 5 files at a time
+	var limit uint = 5
+	desc := true
+
+	var output FilesApiOutput
+	output.Files, err = app.db.getFilesPaginatedFromAccount(account.ID, input.Skip, limit, input.Sort, desc)
+	if err != nil {
+		log.Err(err).Msg("Failed to get files from account")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	count, err := app.db.filesAmountOnAccount(account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to get files amount on account")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	output.Count = count
+
+	c.JSON(http.StatusOK, output)
 }

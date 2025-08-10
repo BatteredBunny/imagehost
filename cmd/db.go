@@ -73,8 +73,8 @@ type Files struct {
 	FileSize         uint
 	MimeType         string
 
-	// This field is not usually populated! Has to be calculated seperatly by looking at FileViews
-	Views uint `gorm:"-:migration"` // Number of views this file has
+	Views      []FileViews `gorm:"foreignKey:FilesID" json:"-"`
+	ViewsCount uint        `gorm:"-"` // Used for export
 
 	ExpiryDate time.Time `gorm:"default:null"` // Time when the file will be deleted
 
@@ -89,9 +89,6 @@ type FileViews struct {
 	IpHash string `gorm:"index:,unique,composite:hash_collision"`
 
 	FilesID uint `gorm:"index:,unique,composite:hash_collision"`
-
-	// TODO: fix constraint deletion
-	Files Files `gorm:"foreignKey:FilesID;constraint:OnDelete:CASCADE"`
 }
 
 // Doesn't work
@@ -649,27 +646,24 @@ func (db *Database) deleteExpiredInviteCodes() (err error) {
 		Delete(&InviteCodes{}).Error
 }
 
-func (db *Database) getFilesPaginatedFromAccount(accountID uint, skip uint, limit uint, sort string, desc bool) (files []Files, err error) {
-	if sort == "views" {
-		err = db.Model(&Files{}).
-			Debug().
-			Joins("LEFT JOIN file_views ON file_views.files_id = files.id").
-			Where(&Files{UploaderID: accountID}).
-			Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
-			Select("files.*, COALESCE(COUNT(file_views.id), 0) as views").                          // Default null to 0
-			Group("files.id").
-			Order(clause.OrderByColumn{Column: clause.Column{Name: "views"}, Desc: desc}).
-			Offset(int(skip)).
-			Limit(int(limit)).
-			Find(&files).Error
-	} else {
-		err = db.Model(&Files{}).
-			Where(&Files{UploaderID: accountID}).
-			Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
-			Order(clause.OrderByColumn{Column: clause.Column{Name: sort}, Desc: desc}).
-			Offset(int(skip)).
-			Limit(int(limit)).
-			Find(&files).Error
+func (db *Database) getFilesPaginatedFromAccount(accountID, skip, limit uint, sort string, desc bool) (files []Files, err error) {
+	if err = db.Model(&Files{}).
+		Where("uploader_id = ?", accountID).
+		Where("expiry_date IS NULL OR expiry_date > ?", time.Now()).
+		Offset(int(skip)).
+		Limit(int(limit)).
+		Preload("Views").
+		Joins("LEFT JOIN file_views ON file_views.files_id = files.id").
+		Select("files.*, COUNT(file_views.id) AS views").
+		Group("files.id").Order(clause.OrderByColumn{
+		Column: clause.Column{Name: sort},
+		Desc:   desc,
+	}).Find(&files).Error; err != nil {
+		return
+	}
+
+	for i, file := range files {
+		files[i].ViewsCount = uint(len(file.Views))
 	}
 
 	return

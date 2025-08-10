@@ -77,7 +77,7 @@ func (app *Application) verifySessionAuthentication() gin.HandlerFunc {
 		sessionToken, err := app.parseSessionTokenFromForm(c)
 		if err != nil {
 			// Fallback to checking cookie
-			log.Info().Msg("Validating cookie")
+			log.Debug().Msg("Validating cookie")
 			var loggedIn bool
 			sessionToken, _, loggedIn, _ = app.validateAuthCookie(c)
 			if loggedIn {

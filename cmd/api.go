@@ -164,6 +164,11 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 		}
 	}
 
+	if !expiryDate.IsZero() && expiryDate.Before(time.Now()) {
+		c.String(http.StatusBadRequest, "Can't specify expiry in the past, sorry.")
+		return
+	}
+
 	fileRaw, _, err := c.Request.FormFile("file")
 	defer fileRaw.Close()
 	if err != nil {

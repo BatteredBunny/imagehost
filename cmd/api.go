@@ -182,7 +182,7 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 	mime := mimetype.Detect(file)
 	fullFileName := app.generateFullFileName(mime)
 
-	switch app.config.fileStorageMethod {
+	switch app.config.FileStorageMethod {
 	case fileStorageS3:
 		err = app.uploadFileS3(file, fullFileName)
 	case fileStorageLocal:

@@ -14,7 +14,7 @@ import (
 func setupRatelimiting(c Config) *limiter.Limiter {
 	rateLimiter := tollbooth.NewLimiter(2, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
 
-	if c.behindReverseProxy {
+	if c.BehindReverseProxy {
 		rateLimiter.SetIPLookup(limiter.IPLookup{
 			Name: "X-Forwarded-For",
 		})
@@ -35,8 +35,8 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	log.Info().Msg("Setting up router")
 
 	app.Router = gin.Default()
-	app.Router.ForwardedByClientIP = c.behindReverseProxy
-	app.Router.SetTrustedProxies([]string{c.trustedProxy})
+	app.Router.ForwardedByClientIP = c.BehindReverseProxy
+	app.Router.SetTrustedProxies([]string{c.TrustedProxy})
 
 	templates := template.Must(template.New("").Funcs(template.FuncMap{
 		"formatTimeDate": formatTimeDate,

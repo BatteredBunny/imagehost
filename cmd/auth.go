@@ -38,7 +38,7 @@ func (app *Application) setupSocialLogin() {
 	gothic.Store = sessions.NewCookieStore(generateSecureKey(32))
 
 	goth.UseProviders(
-		github.New(githubApiKey, githubSecret, fmt.Sprintf("%s/api/auth/login/github/callback", app.config.publicUrl)),
+		github.New(githubApiKey, githubSecret, fmt.Sprintf("%s/api/auth/login/github/callback", app.config.PublicUrl)),
 	)
 }
 

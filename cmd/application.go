@@ -34,11 +34,11 @@ type Config struct {
 	DatabaseConnectionUrl string `toml:"database_connection_url"`
 	Port                  string `toml:"port"`
 
-	behindReverseProxy bool   `toml:"behind_reverse_proxy"`
-	trustedProxy       string `toml:"trusted_proxy"`
-	publicUrl          string `toml:"public_url"` // URL to use for github callback and cookies
+	BehindReverseProxy bool   `toml:"behind_reverse_proxy"`
+	TrustedProxy       string `toml:"trusted_proxy"`
+	PublicUrl          string `toml:"public_url"` // URL to use for github callback and cookies
 
-	fileStorageMethod fileStorageMethod
+	FileStorageMethod fileStorageMethod
 	S3                s3Config `toml:"s3"`
 }
 

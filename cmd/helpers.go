@@ -13,7 +13,7 @@ import (
 )
 
 func (app *Application) deleteFile(fileName string) (err error) {
-	switch app.config.fileStorageMethod {
+	switch app.config.FileStorageMethod {
 	case fileStorageLocal:
 		err = os.Remove(app.config.DataFolder + fileName)
 	case fileStorageS3:

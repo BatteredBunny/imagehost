@@ -32,7 +32,7 @@ func PublicFiles() http.FileSystem {
 }
 
 func prepareStorage(c Config) (s3client *s3.S3) {
-	switch c.fileStorageMethod {
+	switch c.FileStorageMethod {
 	case fileStorageS3:
 		log.Info().Msg("Storing files in s3 bucket")
 
@@ -78,9 +78,9 @@ func initializeConfig() (c Config) {
 	}
 
 	if c.S3 != (s3Config{}) {
-		c.fileStorageMethod = fileStorageS3
+		c.FileStorageMethod = fileStorageS3
 	} else {
-		c.fileStorageMethod = fileStorageLocal
+		c.FileStorageMethod = fileStorageLocal
 	}
 
 	if c.MaxUploadSize <= 0 {
@@ -88,9 +88,9 @@ func initializeConfig() (c Config) {
 		c.MaxUploadSize = 100 * 1024 * 1024 // 100 MB
 	}
 
-	if c.publicUrl == "" {
+	if c.PublicUrl == "" {
 		log.Warn().Msg("Warning no public_url option set in toml, github login might not work")
-		c.publicUrl = fmt.Sprintf("http://localhost:%s", c.Port)
+		c.PublicUrl = fmt.Sprintf("http://localhost:%s", c.Port)
 	}
 
 	return

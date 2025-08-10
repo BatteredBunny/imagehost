@@ -7,6 +7,8 @@ import (
 
 	"crypto/rand"
 
+	"path/filepath"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -15,7 +17,7 @@ import (
 func (app *Application) deleteFile(fileName string) (err error) {
 	switch app.config.FileStorageMethod {
 	case fileStorageLocal:
-		err = os.Remove(app.config.DataFolder + fileName)
+		err = os.Remove(filepath.Join(app.config.DataFolder, fileName))
 	case fileStorageS3:
 		err = app.deleteFileS3(fileName)
 	default:

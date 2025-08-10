@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"path/filepath"
+
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -191,7 +193,7 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 	case fileStorageS3:
 		err = app.uploadFileS3(file, fullFileName)
 	case fileStorageLocal:
-		err = os.WriteFile(app.config.DataFolder+fullFileName, file, 0600)
+		err = os.WriteFile(filepath.Join(app.config.DataFolder, fullFileName), file, 0600)
 	default:
 		err = ErrUnknownStorageMethod
 	}

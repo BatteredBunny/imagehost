@@ -19,6 +19,12 @@ in
 
     createDbLocally = lib.mkEnableOption "creation of database on the instance";
 
+    environmentFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Used for specifying GITHUB_CLIENT_ID and GITHUB_SECRET";
+    };
+
     settings = {
       port = lib.mkOption {
         type = lib.types.int;
@@ -27,8 +33,11 @@ in
         default = 8872;
       };
 
-      database_type = lib.mkOption { # TODO: make this an enum
-        type = lib.types.str;
+      database_type = lib.mkOption {
+        type = lib.types.enum [
+          "postgresql"
+          "sqlite"
+        ];
         default = "postgresql";
         example = "sqlite";
         description = "Database type";
@@ -109,6 +118,7 @@ in
         SystemCallArchitectures = "native";
         PrivateUsers = true;
         StateDirectory = "imagehost";
+        EnvironmentFile = cfg.environmentFile;
         ExecStart = "${lib.getExe cfg.package} -c=${tomlSetting}";
         Restart = "always";
       };
@@ -140,6 +150,6 @@ in
       group = "imagehost";
     };
 
-    users.groups.imagehost = {};
+    users.groups.imagehost = { };
   };
 }

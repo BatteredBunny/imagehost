@@ -475,7 +475,7 @@ func (db *Database) getAccounts() (users []Accounts, err error) {
 func (db *Database) filesAmountOnAccount(accountID uint) (count int64, err error) {
 	err = db.Model(&Files{}).
 		Where(&Files{UploaderID: accountID}).
-		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
 		Count(&count).Error
 
 	return
@@ -484,7 +484,7 @@ func (db *Database) filesAmountOnAccount(accountID uint) (count int64, err error
 func (db *Database) getAllFilesFromAccount(userID uint) (files []Files, err error) {
 	err = db.Model(&Files{}).
 		Where(&Files{UploaderID: userID}).
-		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
 		Find(&files).Error
 
 	return
@@ -520,7 +520,7 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 	var count int64
 	if err := db.Model(&Files{}).
 		Where(&Files{FileName: fileName}).
-		Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
 		Count(&count).Error; err != nil {
 		return false, err
 	}
@@ -625,7 +625,7 @@ func (db *Database) deleteUploadToken(userID uint, uploadToken uuid.UUID) (err e
 
 func (db *Database) findExpiredFiles() (files []Files, err error) {
 	err = db.Model(&Files{}).
-		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Where("expiry_date is not null AND expiry_date < ?", time.Now()).
 		Find(&files).Error
 
 	return
@@ -633,19 +633,19 @@ func (db *Database) findExpiredFiles() (files []Files, err error) {
 
 func (db *Database) deleteExpiredFiles() (err error) {
 	return db.Model(&Files{}).
-		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Where("expiry_date is not null AND expiry_date < ?", time.Now()).
 		Delete(&Files{}).Error
 }
 
 func (db *Database) deleteExpiredSessionTokens() (err error) {
 	return db.Model(&SessionTokens{}).
-		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Where("expiry_date is not null AND expiry_date < ?", time.Now()).
 		Delete(&SessionTokens{}).Error
 }
 
 func (db *Database) deleteExpiredInviteCodes() (err error) {
 	return db.Model(&InviteCodes{}).
-		Where("expiry_date not null AND expiry_date < ?", time.Now()).
+		Where("expiry_date is not null AND expiry_date < ?", time.Now()).
 		Delete(&InviteCodes{}).Error
 }
 
@@ -655,8 +655,8 @@ func (db *Database) getFilesPaginatedFromAccount(accountID uint, skip uint, limi
 			Debug().
 			Joins("LEFT JOIN file_views ON file_views.files_id = files.id").
 			Where(&Files{UploaderID: accountID}).
-			Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
-			Select("files.*, COALESCE(COUNT(file_views.id), 0) as views"). // Default null to 0
+			Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
+			Select("files.*, COALESCE(COUNT(file_views.id), 0) as views").                          // Default null to 0
 			Group("files.id").
 			Order(clause.OrderByColumn{Column: clause.Column{Name: "views"}, Desc: desc}).
 			Offset(int(skip)).
@@ -665,7 +665,7 @@ func (db *Database) getFilesPaginatedFromAccount(accountID uint, skip uint, limi
 	} else {
 		err = db.Model(&Files{}).
 			Where(&Files{UploaderID: accountID}).
-			Where("(expiry_date not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
+			Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
 			Order(clause.OrderByColumn{Column: clause.Column{Name: sort}, Desc: desc}).
 			Offset(int(skip)).
 			Limit(int(limit)).

@@ -1,18 +1,48 @@
 <div id="topbar">
     <div class="left">
-        <a href="/">Home</a>
+        <a class="topbar-option" href="/">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#home" />
+            </svg>
+            <span>Home</span>
+        </a>
         {{ if .LoggedIn }}
-        <a href="/user">Account {{ .AccountID }}</a>
+        <a class="topbar-option" href="/user">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#user" />
+            </svg>
+            <span>Account {{ .AccountID }}</span>
+        </a>
         {{ if .IsAdmin }}
-        <a href="/admin">Admin</a>
+        <a class="topbar-option" href="/admin">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#server" />
+            </svg>
+            <span>Admin</span>
+        </a>
         {{ end }}
-        <a href="/logout">Logout</a>
+        <a class="topbar-option" href="/logout">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#log-out" />
+            </svg>
+            <span>Logout</span>
+        </a>
         {{ else }}
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
+        <a class="topbar-option" href="/login">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#log-in" />
+            </svg>
+            <span>Login</span>
+        </a>
+        <a class="topbar-option" href="/register">Register</a>
         {{ end }}
     </div>
     <div class="right">
-        <a href="https://github.com/BatteredBunny/imagehost">Code</a>
+        <a class="topbar-option" href="https://github.com/BatteredBunny/imagehost">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#git-merge" />
+            </svg>
+            <span>Code</span>
+        </a>
     </div>
 </div>

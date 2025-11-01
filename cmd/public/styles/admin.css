@@ -15,6 +15,7 @@
             padding: 10px;
             gap: 10px;
 
+            max-width: 700px;
             flex: 2;
 
             .top-row {

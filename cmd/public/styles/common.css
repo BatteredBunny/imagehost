@@ -97,15 +97,29 @@ button, input[type="submit"] {
 }
 
 .delete-button {
-    color: rgb(247, 0, 0);
-    border-color: rgb(247, 0, 0) !important;
+    color: light-dark(rgb(220, 0, 0), rgb(255, 80, 80));
+    border-color: light-dark(rgb(220, 0, 0), rgb(255, 80, 80)) !important;
+    background-color: light-dark(rgb(255, 240, 240), transparent);
+    font-weight: bold;
 
     &:hover {
-        background-color: rgb(214, 0, 0);
-        border-color: rgb(214, 0, 0);
-
+        background-color: light-dark(rgb(220, 0, 0), rgb(200, 0, 0));
+        border-color: light-dark(rgb(200, 0, 0), rgb(200, 0, 0)) !important;
         color: white;
+        transition-duration: .2s;
+    }
+}
 
+.create-button {
+    color: light-dark(rgb(0, 120, 212), rgb(80, 180, 255));
+    border-color: light-dark(rgb(0, 120, 212), rgb(80, 180, 255)) !important;
+    background-color: light-dark(rgb(240, 248, 255), transparent);
+    font-weight: bold;
+
+    &:hover {
+        background-color: light-dark(rgb(0, 120, 212), rgb(0, 100, 180));
+        border-color: light-dark(rgb(0, 100, 180), rgb(0, 100, 180)) !important;
+        color: white;
         transition-duration: .2s;
     }
 }
@@ -130,6 +144,18 @@ button, input[type="submit"] {
         display: flex;
         flex-direction: row;
         gap: 10px;
+    }
+
+    .topbar-option {
+        &:hover {
+            text-decoration: none;
+            color: var(--text-color);
+            transition-duration: .2s;
+        }
+
+        span, svg {
+            vertical-align: middle;
+        }
     }
 }
 

@@ -110,7 +110,7 @@
 
             <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
                 <input type="text" name="nickname" placeholder="Nickname">
-                <input type="submit" value="Create upload token">
+                <input class="create-button" type="submit" value="Create upload token">
             </form>
 
             {{ if .UploadTokens }}
@@ -142,6 +142,7 @@
             {{ end }}
         </div>
 
+        {{ if .InviteCodes }}
         <div id="invite-codes" class="setting-group">
             <h2>Invite codes</h2>
 
@@ -153,8 +154,8 @@
                 <div class="code">
                     <code class="code-text">{{ .Code }}</code>
                     <div class="info">
-                        <div>Uses left {{ .Uses }}</div>
-                        <div>Expires {{ formatTimeDate .ExpiryDate }}</div>
+                        <div class="uses-left">Uses left {{ .Uses }}</div>
+                        <div class="invite-code-expires" title="{{ formatTimeDate .ExpiryDate }}">Expires {{ relativeTime .ExpiryDate }}</div>
 
                         <form action="/api/account/delete_invite_code" method="POST" enctype="multipart/form-data">
                             <input type="text" name="invite_code" value="{{ .Code }}" hidden>
@@ -164,15 +165,6 @@
                 </div>
                 {{ end }}
             </div>
-        </div>
-
-        {{ if .IsAdmin }}
-        <div id="admin-panel" class="setting-group">
-            <h2>Admin actions</h2>
-
-            <form action="/api/account/new_invite_code" method="POST" enctype="multipart/form-data">
-                <input type="submit" value="Create invite token">
-            </form>
         </div>
         {{ end }}
 

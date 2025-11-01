@@ -55,11 +55,9 @@ Have a look at docker-compose.yml
 
 # Development
 
-## Dev setup with docker
-
-Theres a docker-compose.yml config for setting up the service with postgresql
+## Dev setup with nix
 
 ```
-docker compose up --build
+nix run .#test-service.driverInteractive
 # Then visit http://localhost:8080
 ```

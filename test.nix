@@ -1,12 +1,28 @@
-{ nixosTest, nixosModule }:
-nixosTest {
+{ testers }: let
+  port = 8080;
+ in
+testers.nixosTest {
   name = "imagehost";
+
+  interactive.nodes.machine = {
+    services.imagehost.openFirewall = true;
+
+    virtualisation.forwardPorts = [
+      {
+        from = "host";
+        host.port = 8080;
+        guest.port = port;
+      }
+    ];
+  };
+
   nodes.machine = { ... }: {
-    imports = [ nixosModule ];
+    imports = [ ../module.nix ];
     services.imagehost = {
       enable = true;
       createDbLocally = true;
       settings.database_type = "postgresql";
+      settings.port = port;
     };
 
     services.postgresql.enable = true;

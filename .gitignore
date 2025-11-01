@@ -8,3 +8,4 @@ imagehost-data
 imagehost
 imagehost.db
 .env
+.nixos-test-history

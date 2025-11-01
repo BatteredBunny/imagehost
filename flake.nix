@@ -31,7 +31,7 @@
           pkgs = nixpkgsFor.${system};
         in
         {
-          service = pkgs.callPackage ./test.nix { nixosModule = self.nixosModules.default; };
+          service = pkgs.callPackage ./test.nix { };
         }
       );
 
@@ -43,6 +43,7 @@
         {
           inherit (overlay) imagehost;
           default = overlay.imagehost;
+          test-service = pkgs.callPackage ./test.nix { };
         }
       );
 

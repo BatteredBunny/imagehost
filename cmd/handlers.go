@@ -380,34 +380,6 @@ func (app *Application) deleteUploadTokenAPI(c *gin.Context) {
 	c.String(http.StatusOK, "Upload token deleted successfully")
 }
 
-// TODO: allow specifying uses and if its an admin account allow creating admin invites
-func (app *Application) newInviteCodeApi(c *gin.Context) {
-	sessionToken, exists := c.Get("sessionToken")
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		log.Err(err).Msg("Failed to fetch user by session token")
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	inviteCode, err := app.db.createInviteCode(5, "USER", account.ID)
-	if err != nil {
-		log.Err(err).Msg("Failed to create invite code")
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.String(http.StatusOK, inviteCode.Code)
-}
-
 func (app *Application) deleteInviteCodeAPI(c *gin.Context) {
 	sessionToken, exists := c.Get("sessionToken")
 	if !exists {

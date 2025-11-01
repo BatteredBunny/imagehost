@@ -120,3 +120,30 @@ func (app *Application) adminDeleteUploadTokens(c *gin.Context) {
 
 	c.String(http.StatusOK, "Upload tokens deleted")
 }
+
+type adminGiveInviteCodeInput struct {
+	ID   uint `form:"id"`
+	Uses uint `form:"uses,default=5"` // How many uses the invite code has
+}
+
+// TODO: allow giving admin account invites
+func (app *Application) adminGiveInviteCode(c *gin.Context) {
+	var (
+		input adminGiveInviteCodeInput
+		err   error
+	)
+
+	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	inviteCode, err := app.db.createInviteCode(input.Uses, "USER", input.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to create invite code")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.String(http.StatusOK, inviteCode.Code)
+}

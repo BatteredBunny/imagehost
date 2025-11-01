@@ -121,6 +121,10 @@
                             <input type="text" name="id" value="{{ .ID }}" hidden>
                             <button class="delete-button" type="submit">Delete upload tokens</button>
                         </form>
+                        <form action="/api/admin/give_invite_code" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="id" value="{{ .ID }}" hidden>
+                            <button class="create-button" type="submit">Give invite token</button>
+                        </form>
                     </div>
                 </div>
                 {{ end }}

@@ -45,55 +45,58 @@
             <div class="file-grid">
                 {{ range .Files }}
                 <div class="file-entry">
-                    <div class="file-content">
-                        {{ if mimeIsImage .MimeType }}
-                            <a href="/{{ .FileName }}">
-                                <img src="/{{ .FileName }}" alt="Uploaded image">
-                            </a>
-                        {{ else if mimeIsVideo .MimeType }}
-                            <video src="/{{ .FileName }}" alt="Uploaded video" controls>
-                        {{ else if mimeIsAudio .MimeType }}
-                            <audio src="/{{ .FileName }}" controls>
-                        {{ else }}
-                            <a href="/{{ .FileName }}">{{ .FileName }}</a>
-                        {{ end }}
-                    </div>
-
-                    <div class="info-bar">
-                        <div class="info-row">
-                            {{ if formatTimeDate .ExpiryDate }}
-                                <div>Expires <span title="{{ formatTimeDate .ExpiryDate }}">{{ relativeTime .ExpiryDate }}</span></div>
+                    <a href="/{{ .FileName }}" class="file-link">
+                        <div class="file-thumbnail">
+                            {{ if mimeIsImage .MimeType }}
+                            <img src="/{{ .FileName }}" alt="Uploaded image">
+                            {{ else if mimeIsVideo .MimeType }}
+                            <video src="/{{ .FileName }}" alt="Uploaded video">
+                            {{ else if mimeIsAudio .MimeType }}
+                            <div class="file-icon">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#music" />
+                                </svg>
+                            </div>
+                            {{ else }}
+                            <div class="file-icon">
+                                <svg class="feather-icon">
+                                    <use href="/public/assets/feather-sprite.svg#file" />
+                                </svg>
+                            </div>
                             {{ end }}
+                        </div>
+                        <div class="file-name">{{ .FileName }}</div>
+                    </a>
 
-                            <div class="views">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#eye" />
-                                </svg>
-                                <span>{{ .Views }}</span>
-                            </div>
+                    <div class="file-info">
+                        {{ if formatTimeDate .ExpiryDate }}
+                        <div class="expires-info" title="{{ formatTimeDate .ExpiryDate }}">
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#trash-2" />
+                            </svg>
+                            <span>{{ relativeTime .ExpiryDate }}</span>
+                        </div>
+                        {{ end }}
+
+                        <div class="views">
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#eye" />
+                            </svg>
+                            <span>{{ .Views }} view</span>
                         </div>
 
-                        <div class="info-row info-row-second">
-                            <div class="creation-date">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#clock" />
-                                </svg>
-                                <span title="{{ formatTimeDate .CreatedAt }}">{{ relativeTime .CreatedAt }}</span>
-                            </div>
-
-                            <div>
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#hard-drive" />
-                                </svg>
-                                <span title="{{ .FileSize }} bytes">{{ humanizeBytes .FileSize }}</span>
-                            </div>
-
-                            <form action="/api/file/delete" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                                <input class="delete-button" type="submit" value="Delete">
-                            </form>
+                        <div class="file-size" title="{{ .FileSize }} bytes">
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                            </svg>
+                            <span>{{ humanizeBytes .FileSize }}</span>
                         </div>
                     </div>
+
+                    <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
+                        <input type="text" name="file_name" value="{{ .FileName }}" hidden>
+                        <input class="delete-button" type="submit" value="Delete">
+                    </form>
                 </div>
                 {{ end }}
             </div>
@@ -102,7 +105,8 @@
         <div id="upload-tokens" class="setting-group">
             <h2>Upload tokens</h2>
 
-            <p>For script usage, its recommended to give programs or scripts specific tokens instead of general ones for security purposes.</p>
+            <p>For script usage, its recommended to give programs or scripts specific tokens instead of general ones for
+                security purposes.</p>
 
             <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
                 <input type="text" name="nickname" placeholder="Nickname">
@@ -118,7 +122,8 @@
 
                         <div class="extra-info">
                             {{ if .LastUsed }}
-                            <div>Last used: <span title="{{ formatTimeDate .LastUsed }}">{{ relativeTime .LastUsed }}</span></div>
+                            <div>Last used: <span title="{{ formatTimeDate .LastUsed }}">{{ relativeTime .LastUsed
+                                    }}</span></div>
                             {{ else }}
                             <div>Last used: Never</div>
                             {{ end }}
@@ -140,7 +145,8 @@
         <div id="invite-codes" class="setting-group">
             <h2>Invite codes</h2>
 
-            <p>Shareable account registration codes on your account. You are soley responsible for any users you invite.</p>
+            <p>Shareable account registration codes on your account. You are soley responsible for any users you invite.
+            </p>
 
             <div class="codes">
                 {{ range .InviteCodes }}

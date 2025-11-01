@@ -95,7 +95,7 @@
 
                     <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
                         <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                        <input class="delete-button" type="submit" value="Delete">
+                        <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
                     </form>
                 </div>
                 {{ end }}
@@ -130,7 +130,7 @@
 
                             <form action="/api/account/delete_upload_token" method="POST" enctype="multipart/form-data">
                                 <input type="text" name="upload_token" value="{{ .Token }}" hidden>
-                                <input class="delete-button" type="submit" value="Delete">
+                                <input class="delete-button" type="submit" value="Delete" data-confirm="Are you sure you want to delete this upload token?">
                             </form>
                         </div>
                     </div>
@@ -157,9 +157,9 @@
                         <div class="uses-left">Uses left {{ .Uses }}</div>
                         <div class="invite-code-expires" title="{{ formatTimeDate .ExpiryDate }}">Expires {{ relativeTime .ExpiryDate }}</div>
 
-                        <form action="/api/account/delete_invite_code" method="POST" enctype="multipart/form-data">
+                        <form action="/api/account/delete_invite_code" method="POST" enctype="multipart/form-data" >
                             <input type="text" name="invite_code" value="{{ .Code }}" hidden>
-                            <input class="delete-button" type="submit" value="Delete">
+                            <input class="delete-button" type="submit" value="Delete" data-confirm="Are you sure you want to delete this invite code?">
                         </form>
                     </div>
                 </div>
@@ -172,14 +172,16 @@
             <h2>Account</h2>
             <div class="account-settings-button-row">
                 <form action="/api/account/delete" method="POST" enctype="multipart/form-data">
-                    <input class="delete-button" type="submit" value="Delete my account">
+                    <input class="delete-button" type="submit" value="Delete my account" data-confirm="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.">
                 </form>
                 <form action="/api/account/delete_all_files" method="POST" enctype="multipart/form-data">
-                    <input class="delete-button" type="submit" value="Delete all files">
+                    <input class="delete-button" type="submit" value="Delete all files" data-confirm="Are you sure you want to delete ALL your files? This action cannot be undone.">
                 </form>
             </div>
         </div>
     </div>
+
+    <script src="/public/js/deleteButtonConfirm.js"></script>
 </body>
 
 </html>

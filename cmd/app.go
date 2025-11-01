@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/BatteredBunny/imagehost/cmd/tags"
 	"github.com/BurntSushi/toml"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -23,7 +24,13 @@ var ErrUnknownStorageMethod = errors.New("unknown file storage method")
 var publicFiles embed.FS
 
 func PublicFiles() http.FileSystem {
-	sub, err := fs.Sub(publicFiles, "public")
+	var files fs.FS = publicFiles
+
+	if tags.DevMode {
+		files = os.DirFS("cmd")
+	}
+
+	sub, err := fs.Sub(files, "public")
 	if err != nil {
 		panic(err)
 	}

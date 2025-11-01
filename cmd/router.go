@@ -38,15 +38,20 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	app.Router.ForwardedByClientIP = c.BehindReverseProxy
 	app.Router.SetTrustedProxies([]string{c.TrustedProxy})
 
-	templates := template.Must(template.New("").Funcs(template.FuncMap{
+	app.Router.SetFuncMap(template.FuncMap{
 		"formatTimeDate": formatTimeDate,
 		"relativeTime":   relativeTime,
 		"humanizeBytes":  humanizeBytes,
 		"mimeIsImage":    mimeIsImage,
 		"mimeIsVideo":    mimeIsVideo,
 		"mimeIsAudio":    mimeIsAudio,
-	}).ParseFS(TemplateFiles, "templates/*.gohtml", "templates/components/*.gohtml"))
-	app.Router.SetHTMLTemplate(templates)
+	})
+
+	app.Router.SetHTMLTemplate(template.Must(template.
+		New("templates").
+		Funcs(app.Router.FuncMap).
+		ParseFS(TemplateFiles, "templates/*.gohtml", "templates/components/*.gohtml"),
+	))
 
 	app.Router.Use(
 		app.bodySizeMiddleware(),

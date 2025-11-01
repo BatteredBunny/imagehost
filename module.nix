@@ -17,6 +17,11 @@ in
       default = pkgs.callPackage ./build.nix { };
     };
 
+    openFirewall = lib.mkEnableOption "" // {
+      description = "Open service port in firewall.";
+      default = false;
+    };
+
     createDbLocally = lib.mkEnableOption "creation of database on the instance";
 
     environmentFile = lib.mkOption {
@@ -151,5 +156,9 @@ in
     };
 
     users.groups.imagehost = { };
+
+    networking.firewall = lib.mkIf cfg.openFirewall {
+      allowedTCPPorts = [ (builtins.fromJSON cfg.settings.port) ];
+    };
   };
 }

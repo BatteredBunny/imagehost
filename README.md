@@ -41,6 +41,7 @@ services = {
     imagehost = {
         enable = true;
         createDbLocally = true;
+        openFirewall = false;
         settings.database_type = "postgresql";
     };
 

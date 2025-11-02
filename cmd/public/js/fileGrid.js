@@ -1,3 +1,6 @@
+import { reloadCurrentPage, decrementTotalFiles } from './fileRenderer.js';
+import { loadFileStats } from './fileStats.js';
+
 function deleteFileGrid(elem) {
     const filename = elem.parentElement.dataset.filename;
 
@@ -18,7 +21,9 @@ export async function deleteFileByName(filename) {
     });
 
     if (response.ok) {
-        removeFileByName(filename);
+        decrementTotalFiles();
+        reloadCurrentPage();
+        loadFileStats();
         return true;
     } else {
         alert('Failed to delete file');
@@ -31,10 +36,8 @@ export function setVisibilityGrid(filename, isPublic) {
 
     for (const fileElement of fileElements) {
         if (fileElement.dataset.filename === filename) {
-            // Update the data attribute
             fileElement.dataset.public = isPublic.toString();
 
-            // Update the visibility icon and text in the grid
             const visibilityStatus = fileElement.querySelector('.visbility-status');
             if (visibilityStatus) {
                 const icon = visibilityStatus.querySelector('use');
@@ -48,17 +51,6 @@ export function setVisibilityGrid(filename, isPublic) {
                     text.textContent = 'Private';
                 }
             }
-            break;
-        }
-    }
-}
-
-function removeFileByName(filename) {
-    const fileElements = document.getElementsByClassName('file-entry');
-
-    for (const fileElement of fileElements) {
-        if (fileElement.dataset.filename === filename) {
-            fileElement.remove();
             break;
         }
     }

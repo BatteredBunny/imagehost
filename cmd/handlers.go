@@ -156,11 +156,6 @@ func (app *Application) adminPage(c *gin.Context) {
 	}
 }
 
-type UiFile struct {
-	Files
-	Views uint
-}
-
 func (app *Application) userPage(c *gin.Context) {
 	_, account, loggedIn, err := app.validateAuthCookie(c)
 	if errors.Is(err, ErrInvalidAuthCookie) {
@@ -190,29 +185,6 @@ func (app *Application) userPage(c *gin.Context) {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
-
-		var rawFiles []Files
-		rawFiles, err = app.db.getAllFilesFromAccount(account.ID)
-		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		var files []UiFile
-		for _, file := range rawFiles {
-			count, err := app.db.getFileViews(file.ID)
-			if err != nil {
-				log.Err(err).Msg("Failed to determine file views")
-			}
-
-			files = append(files, UiFile{Files: file, Views: uint(count)})
-		}
-
-		templateInput["Files"] = files
-		templateInput["FilesCount"] = len(files)
-		templateInput["FilesSizeTotal"] = uint(Sum(files, func(file UiFile) int {
-			return int(file.FileSize)
-		}))
 
 		uploadTokens, err := app.db.getUploadTokens(account.ID)
 		if err != nil {
@@ -464,6 +436,43 @@ func (app *Application) deleteFilesFromAccount(userID uint) (err error) {
 	return
 }
 
+type FileStatsOutput struct {
+	Count     uint `json:"count"`
+	SizeTotal uint `json:"size_total"`
+}
+
+func (app *Application) fileStatsAPI(c *gin.Context) {
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	var output FileStatsOutput
+
+	totalFiles, totalStorage, err := app.db.getFileStats(account.ID)
+	if err != nil {
+		log.Err(err).Msg("Failed to get file stats")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	output.Count = totalFiles
+	output.SizeTotal = totalStorage
+
+	c.JSON(http.StatusOK, output)
+}
+
 type FilesApiInput struct {
 	Skip uint   `form:"skip,default=0"`          // Used for pagination
 	Sort string `form:"sort,default=created_at"` // "created_at", "views", "file_size"
@@ -507,8 +516,8 @@ func (app *Application) filesAPI(c *gin.Context) {
 		return
 	}
 
-	// Api returns 5 files at a time
-	var limit uint = 5
+	// Api returns 8 files at a time
+	var limit uint = 8
 	desc := true
 
 	var output FilesApiOutput

@@ -86,6 +86,7 @@ func setupRouter(uninitializedApp *uninitializedApplication, c Config) (app *App
 	accountAPI.POST("/delete_all_files", app.deleteFilesAPI)
 	accountAPI.POST("/toggle_file_public", app.toggleFilePublicAPI)
 	accountAPI.GET("/files", app.filesAPI)
+	accountAPI.GET("/file_stats", app.fileStatsAPI)
 	// ---
 
 	// Admin apis

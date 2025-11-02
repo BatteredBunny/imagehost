@@ -489,6 +489,27 @@ func (db *Database) getAllFilesFromAccount(userID uint) (files []Files, err erro
 	return
 }
 
+func (db *Database) getFileStats(userID uint) (totalFiles uint, totalStorage uint, err error) {
+	var result struct {
+		TotalFiles   uint
+		TotalStorage uint
+	}
+
+	err = db.Model(&Files{}).
+		Select("COUNT(*) AS total_files, COALESCE(SUM(file_size), 0) AS total_storage").
+		Where(&Files{UploaderID: userID}).
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()). // Filters expired files
+		Scan(&result).Error
+	if err != nil {
+		return
+	}
+
+	totalFiles = result.TotalFiles
+	totalStorage = result.TotalStorage
+
+	return
+}
+
 func (db *Database) getAccountByID(accountID uint) (account Accounts, err error) {
 	err = db.Model(&Accounts{}).
 		Where(&Accounts{ID: accountID}).

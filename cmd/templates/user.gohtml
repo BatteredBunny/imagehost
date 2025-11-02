@@ -41,83 +41,80 @@
 
         <div id="files" class="setting-group">
             <h2>Files</h2>
-            <p>{{ .FilesCount }} file{{ if ne .FilesCount 1 }}s{{ end }} uploaded, totalling <span title="{{ .FilesSizeTotal }} bytes">{{ humanizeBytes .FilesSizeTotal }}</span></p>
+            <p id="files-stats"></p>
             <div class="file-grid">
-                {{ range .Files }}
-                <div class="file-entry"
-                    data-filename="{{ .FileName }}"
-                    data-originalfilename="{{ .OriginalFileName }}"
-                    data-filesize="{{ humanizeBytes .FileSize }}"
-                    data-filesizebytes="{{ .FileSize }}"
-                    data-isimage="{{ mimeIsImage .MimeType }}"
-                    data-isvideo="{{ mimeIsVideo .MimeType }}"
-                    data-isaudio="{{ mimeIsAudio .MimeType }}"
-                    data-views="{{ .Views }}"
-                    data-public="{{ .Public }}"
-                    data-expirydate="{{ formatTimeDate .ExpiryDate }}"
-                    data-expiryrelative="{{ relativeTime .ExpiryDate }}"
-                    data-createdat="{{ formatTimeDate .CreatedAt }}"
-                    data-createdatrelative="{{ relativeTime .CreatedAt }}"
-                >
+                <p id="file-grid-loading-text"></p>
+            </div>
+
+            <div id="file-grid-loading-overlay">
+                <div class="spinner"></div>
+            </div>
+
+            <div id="pagination-controls" style="display: none;">
+                <button id="prev-page-btn" class="pagination-button" onclick="prevPage()">
+                    <svg class="feather-icon">
+                        <use href="/public/assets/feather-sprite.svg#chevron-left" />
+                    </svg>
+                    <span>Previous</span>
+                </button>
+                <span id="page-info"></span>
+                <button id="next-page-btn" class="pagination-button" onclick="nextPage()">
+                    <span>Next</span>
+                    <svg class="feather-icon">
+                        <use href="/public/assets/feather-sprite.svg#chevron-right" />
+                    </svg>
+                </button>
+            </div>
+
+            <template id="file-entry-template">
+                <div class="file-entry">
                     <div class="file-preview" onclick="showModal(this)">
                         <div class="file-thumbnail">
-                            {{ if mimeIsImage .MimeType }}
-                            <img src="/{{ .FileName }}" alt="Uploaded image">
-                            {{ else if mimeIsVideo .MimeType }}
-                            <video src="/{{ .FileName }}" alt="Uploaded video">
-                            {{ else if mimeIsAudio .MimeType }}
-                            <div class="file-icon">
+                            <img class="preview-image" alt="Uploaded image" style="display: none;">
+
+                            <video class="preview-video" alt="Uploaded video" style="display: none;"></video>
+
+                            <div class="preview-audio file-icon" style="display: none;">
                                 <svg class="feather-icon">
                                     <use href="/public/assets/feather-sprite.svg#music" />
                                 </svg>
                             </div>
-                            {{ else }}
-                            <div class="file-icon">
+
+                            <div class="preview-generic file-icon" style="display: none;">
                                 <svg class="feather-icon">
                                     <use href="/public/assets/feather-sprite.svg#file" />
                                 </svg>
                             </div>
-                            {{ end }}
                         </div>
-                        <div class="file-name">{{ if .OriginalFileName }}{{ .OriginalFileName }}{{ else }}{{ .FileName }}{{ end }}</div>
+                        <div class="file-name"></div>
                     </div>
 
                     <div class="file-info">
-                        {{ if formatTimeDate .ExpiryDate }}
-                        <div class="expires-info" title="{{ formatTimeDate .ExpiryDate }}">
+                        <div class="expires-info" style="display: none;">
                             <svg class="feather-icon">
                                 <use href="/public/assets/feather-sprite.svg#trash-2" />
                             </svg>
-                            <span>{{ relativeTime .ExpiryDate }}</span>
+                            <span class="expiry-text"></span>
                         </div>
-                        {{ end }}
 
                         <div class="views">
                             <svg class="feather-icon">
                                 <use href="/public/assets/feather-sprite.svg#eye" />
                             </svg>
-                            <span>{{ .Views }} view</span>
+                            <span class="views-text"></span>
                         </div>
 
                         <div class="visbility-status">
-                            {{ if .Public }}
                             <svg class="feather-icon">
-                                <use href="/public/assets/feather-sprite.svg#unlock" />
+                                <use class="visibility-icon" />
                             </svg>
-                            <span>Public</span>
-                            {{ else }}
-                            <svg class="feather-icon">
-                                <use href="/public/assets/feather-sprite.svg#lock" />
-                            </svg>
-                            <span>Private</span>
-                            {{ end }}
+                            <span class="visibility-text"></span>
                         </div>
                     </div>
 
                     <button class="delete-button-form delete-button" onclick="deleteFileGrid(this)">Delete</button>
                 </div>
-                {{ end }}
-            </div>
+            </template>
 
             <div id="file-modal" class="file-modal-hidden">
                 <div class="file-modal-window">
@@ -280,9 +277,11 @@
     </div>
 
     <footer>
-        <script src="/public/js/deleteButtonConfirm.js"></script>
+        <script type="module" src="/public/js/deleteButtonConfirm.js"></script>
+        <script type="module" src="/public/js/fileRenderer.js"></script>
         <script type="module" src="/public/js/fileModal.js"></script>
         <script type="module" src="/public/js/fileGrid.js"></script>
+        <script type="module" src="/public/js/fileStats.js"></script>
     </footer>
 </body>
 

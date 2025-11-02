@@ -50,6 +50,8 @@
                     }
 
                     .name {
+                        display: flex;
+                        
                         border-right: 1px solid var(--menu-border-color);
                         flex: 1;
 

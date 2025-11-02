@@ -44,8 +44,21 @@
             <p>{{ .FilesCount }} file{{ if ne .FilesCount 1 }}s{{ end }} uploaded, totalling <span title="{{ .FilesSizeTotal }} bytes">{{ humanizeBytes .FilesSizeTotal }}</span></p>
             <div class="file-grid">
                 {{ range .Files }}
-                <div class="file-entry">
-                    <a href="/{{ .FileName }}" class="file-link">
+                <div class="file-entry"
+                    data-filename="{{ .FileName }}"
+                    data-filesize="{{ humanizeBytes .FileSize }}"
+                    data-filesizebytes="{{ .FileSize }}"
+                    data-isimage="{{ mimeIsImage .MimeType }}"
+                    data-isvideo="{{ mimeIsVideo .MimeType }}"
+                    data-isaudio="{{ mimeIsAudio .MimeType }}"
+                    data-views="{{ .Views }}"
+                    data-public="{{ .Public }}"
+                    data-expirydate="{{ formatTimeDate .ExpiryDate }}"
+                    data-expiryrelative="{{ relativeTime .ExpiryDate }}"
+                    data-createdat="{{ formatTimeDate .CreatedAt }}"
+                    data-createdatrelative="{{ relativeTime .CreatedAt }}"
+                >
+                    <div class="file-preview" onclick="showModal(this)">
                         <div class="file-thumbnail">
                             {{ if mimeIsImage .MimeType }}
                             <img src="/{{ .FileName }}" alt="Uploaded image">
@@ -66,7 +79,7 @@
                             {{ end }}
                         </div>
                         <div class="file-name">{{ .FileName }}</div>
-                    </a>
+                    </div>
 
                     <div class="file-info">
                         {{ if formatTimeDate .ExpiryDate }}
@@ -91,14 +104,104 @@
                             </svg>
                             <span>{{ humanizeBytes .FileSize }}</span>
                         </div>
+
+                        <div class="visbility-status">
+                            {{ if .Public }}
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#unlock" />
+                            </svg>
+                            <span>Public</span>
+                            {{ else }}
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#lock" />
+                            </svg>
+                            <span>Private</span>
+                            {{ end }}
+                        </div>
                     </div>
 
-                    <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
-                        <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                        <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
-                    </form>
+                    <div class="file-actions">
+                        <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
+                            <input type="text" name="file_name" value="{{ .FileName }}" hidden>
+                            <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
+                        </form>
+                    </div>
                 </div>
                 {{ end }}
+            </div>
+
+            <div id="file-modal" class="file-modal-hidden">
+                <div class="file-modal-window">
+                    <div class="file-modal-titlebar">
+                        <h2 id="file-modal-filename">File</h2>
+                        <button class="file-modal-close" onclick="closeModal()">
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#x" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="file-modal-contents">
+                        <div class="file-big-preview">
+                            <img id="file-preview-image" alt="Uploaded image"/>
+                            <video id="file-preview-video" alt="Uploaded video" controls></video>
+                            <audio id="file-preview-audio" alt="Uploaded audio" controls></audio>
+
+                            <a id="file-preview-generic">
+                                <div class="file-icon">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#file" />
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="file-modal-info">
+                            <div class="file-properties">
+                                <div class="views">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#eye" />
+                                    </svg>
+                                    <span id="file-modal-views"></span>
+                                    <span>view</span>
+                                </div>
+
+                                <div id="file-modal-filesize-wrapper" class="file-size">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                                    </svg>
+                                    <span id="file-modal-filesize"></span>
+                                </div>
+
+                                <div id="file-modal-createdat-wrapper">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#clock" />
+                                    </svg>
+                                    <span id="file-modal-createdat"></span>
+                                </div>
+
+                                <div id="file-modal-expirydate-wrapper" class="expires-info">
+                                    <svg class="feather-icon">
+                                        <use href="/public/assets/feather-sprite.svg#trash-2" />
+                                    </svg>
+                                    <span id="file-modal-expirydate"></span>
+                                </div>
+
+                                <div class="visbility-status">
+                                    <svg class="feather-icon">
+                                        <use id="file-modal-visibility-icon"/>
+                                    </svg>
+                                    <span id="file-modal-visibility"></span>
+                                </div>
+                            </div>
+
+                            <div class="file-actions">
+                                <button class="toggle-visibility-button" id="file-modal-toggle-public-button"></button>
+                                <button class="delete-button" id="file-modal-delete-button">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -110,7 +213,7 @@
 
             <form action="/api/account/new_upload_token" method="POST" enctype="multipart/form-data">
                 <input type="text" name="nickname" placeholder="Nickname">
-                <input class="create-button" type="submit" value="Create upload token">
+                <input class="create-button" type="submit" value="Create upload token" autocomplete="off">
             </form>
 
             {{ if .UploadTokens }}
@@ -122,8 +225,7 @@
 
                         <div class="extra-info">
                             {{ if .LastUsed }}
-                            <div>Last used: <span title="{{ formatTimeDate .LastUsed }}">{{ relativeTime .LastUsed
-                                    }}</span></div>
+                            <div>Last used: <span title="{{ formatTimeDate .LastUsed }}">{{ relativeTime .LastUsed }}</span></div>
                             {{ else }}
                             <div>Last used: Never</div>
                             {{ end }}
@@ -182,6 +284,7 @@
     </div>
 
     <script src="/public/js/deleteButtonConfirm.js"></script>
+    <script src="/public/js/fileModal.js"></script>
 </body>
 
 </html>

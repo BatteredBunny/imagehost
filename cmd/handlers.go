@@ -288,13 +288,24 @@ func (app *Application) indexFiles(c *gin.Context) {
 
 	// Looks in database for uploaded file
 	fileName := path.Base(path.Clean(c.Request.URL.Path))
-	if exists, err := app.db.fileExists(fileName); err != nil {
-		log.Err(err).Msg("Failed to check if file exists")
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	} else if !exists {
+
+	fileRecord, err := app.db.getFileByName(fileName)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to get file details")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if !fileRecord.Public {
+		// make sure its the uploader trying to access the file
+		_, account, loggedIn, err := app.validateAuthCookie(c)
+		if err != nil || !loggedIn || account.ID != fileRecord.UploaderID {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
 	}
 
 	if err := app.db.bumpFileViews(fileName, c.ClientIP()); err != nil {
@@ -486,7 +497,7 @@ func (app *Application) filesAPI(c *gin.Context) {
 		return
 	}
 
-	var allowedSorts = []string{
+	allowedSorts := []string{
 		"created_at",
 		"views",
 		"file_size",

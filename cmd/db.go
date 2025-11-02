@@ -1,13 +1,12 @@
 package cmd
 
 import (
+	"crypto/rand"
+	"crypto/sha1"
 	"database/sql"
 	"errors"
 	"strconv"
 	"time"
-
-	"crypto/rand"
-	"crypto/sha1"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -68,10 +67,13 @@ type Files struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	FileName string // Newly generated file name
+
 	// TODO: store and show original file name
 	OriginalFileName string
 	FileSize         uint
 	MimeType         string
+
+	Public bool // If false, only the uploader can see the file
 
 	Views      []FileViews `gorm:"foreignKey:FilesID" json:"-"`
 	ViewsCount uint        `gorm:"-"` // Used for export
@@ -339,7 +341,7 @@ func (db *Database) getAccountBySessionToken(sessionToken uuid.UUID) (account Ac
 }
 
 // Deletes file entry from database
-func (db *Database) deleteFile(fileName string, uploadToken uuid.NullUUID, sessionToken uuid.NullUUID) (err error) {
+func (db *Database) deleteFileEntry(fileName string, uploadToken uuid.NullUUID, sessionToken uuid.NullUUID) (err error) {
 	var account Accounts
 	if uploadToken.Valid {
 		account, err = db.getAccountByUploadToken(uploadToken.UUID)
@@ -525,6 +527,15 @@ func (db *Database) fileExists(fileName string) (bool, error) {
 	return count > 0, nil
 }
 
+func (db *Database) getFileByName(fileName string) (file Files, err error) {
+	err = db.Model(&Files{}).
+		Where(&Files{FileName: fileName}).
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
+		First(&file).Error
+
+	return
+}
+
 func (db *Database) bumpFileViews(fileName string, ip string) (err error) {
 	h := sha1.New()
 	h.Write([]byte(ip))
@@ -665,6 +676,25 @@ func (db *Database) getFilesPaginatedFromAccount(accountID, skip, limit uint, so
 	for i, file := range files {
 		files[i].ViewsCount = uint(len(file.Views))
 	}
+
+	return
+}
+
+func (db *Database) toggleFilePublic(fileName string, accountID uint) (newPublicStatus bool, err error) {
+	var file Files
+
+	if err = db.Model(&Files{}).
+		Where(&Files{FileName: fileName, UploaderID: accountID}).
+		Where("(expiry_date is not null AND expiry_date > ?) OR expiry_date is null", time.Now()).
+		First(&file).Error; err != nil {
+		return
+	}
+
+	newPublicStatus = !file.Public
+
+	err = db.Model(&Files{}).
+		Where(&Files{FileName: fileName, UploaderID: accountID}).
+		Update("public", newPublicStatus).Error
 
 	return
 }

@@ -5,10 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
-
-	"path/filepath"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
@@ -132,13 +131,68 @@ func (app *Application) deleteFileAPI(c *gin.Context) {
 		return
 	}
 
-	if err = app.db.deleteFile(input.FileName, uploadToken, sessionToken); err != nil { // Deletes file entry from database
+	if err = app.db.deleteFileEntry(input.FileName, uploadToken, sessionToken); err != nil { // Deletes file entry from database
 		log.Err(err).Msg("Failed to delete file entry")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	c.String(http.StatusOK, "Successfully deleted the file")
+}
+
+// Api for toggling file public/private status
+type toggleFilePublicAPIInput struct {
+	FileName string `form:"file_name"`
+}
+
+// TODO: merge into a generic image properties modification api
+func (app *Application) toggleFilePublicAPI(c *gin.Context) {
+	var (
+		input toggleFilePublicAPIInput
+		err   error
+	)
+	if err = c.MustBindWith(&input, binding.FormPost); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if input.FileName == "" {
+		c.String(http.StatusBadRequest, "File name is required")
+		c.Abort()
+		return
+	}
+
+	sessionToken, exists := c.Get("sessionToken")
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	account, err := app.db.getAccountBySessionToken(sessionToken.(uuid.UUID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to fetch user by session token")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	newPublicStatus, err := app.db.toggleFilePublic(input.FileName, account.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.String(http.StatusNotFound, "File not found or you don't own this file")
+		return
+	} else if err != nil {
+		log.Err(err).Msg("Failed to toggle file public status")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if newPublicStatus {
+		c.String(http.StatusOK, "File is now public")
+	} else {
+		c.String(http.StatusOK, "File is now private")
+	}
 }
 
 /*
@@ -172,12 +226,12 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 	}
 
 	fileRaw, _, err := c.Request.FormFile("file")
-	defer fileRaw.Close()
 	if err != nil {
 		c.String(http.StatusBadRequest, "No file provided")
 		c.Abort()
 		return
 	}
+	defer fileRaw.Close()
 
 	file, err := io.ReadAll(fileRaw)
 	if err != nil {
@@ -193,7 +247,7 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 	case fileStorageS3:
 		err = app.uploadFileS3(file, fullFileName)
 	case fileStorageLocal:
-		err = os.WriteFile(filepath.Join(app.config.DataFolder, fullFileName), file, 0600)
+		err = os.WriteFile(filepath.Join(app.config.DataFolder, fullFileName), file, 0o600)
 	default:
 		err = ErrUnknownStorageMethod
 	}
@@ -210,6 +264,7 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 			FileSize:   uint(len(file)),
 			MimeType:   mime.String(),
 			ExpiryDate: expiryDate,
+			Public:     true,
 		},
 	}
 

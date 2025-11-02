@@ -30,7 +30,7 @@
                 border-color: var(--text-color);
             }
 
-            .file-link {
+            .file-preview {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -99,11 +99,16 @@
                 }
             }
 
-            .delete-button-form {
+            .file-actions {
                 margin-top: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
 
-                .delete-button {
-                    width: 100%;
+                .delete-button-form {
+                    .delete-button {
+                        width: 100%;
+                    }
                 }
             }
         }
@@ -179,6 +184,10 @@
                 user-select: all;
                 display: flex;
                 align-self: center;
+
+                &:hover {
+                    border-color: var(--text-color);
+                }
             }
 
             .info {
@@ -197,6 +206,208 @@
                     padding-right: 10px;
                 }
             }
+        }
+    }
+}
+
+#file-modal {
+    &.file-modal-hidden {
+        display: none;
+        opacity: 0;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    &.file-modal-visible {
+        display: flex;
+        opacity: 1;
+    }
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    transition: 0.2s;
+
+    .file-modal-window {
+        background-color: var(--menu-bg-color);
+        border: 1px solid var(--menu-border-color);
+        border-radius: 10px;
+        padding: 20px;
+        min-width: 300px;
+        max-width: 95%;
+        max-height: 95vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+        margin: 20px;
+
+        .file-modal-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--menu-border-color);
+
+            h2 {
+                margin: 0;
+                font-size: 1.2rem;
+                word-break: break-word;
+                max-width: calc(100% - 40px);
+            }
+
+            .file-modal-close {
+                display: flex;
+                justify-content: center;
+                align-content: center;
+
+                background: none;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+                transition: background-color 0.2s;
+
+                svg {
+                    width: 20px;
+                    height: 20px;
+                    color: var(--text-color);
+                }
+
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+            }
+        }
+
+        .file-modal-contents {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 20px;
+
+            .file-big-preview {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                max-width: 70%;
+                max-height: 70vh;
+                background-color: var(--background-color);
+                border: 1px solid var(--menu-border-color);
+                border-radius: 8px;
+                padding: 15px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+                #file-preview-generic {
+                    display: none;
+
+                    .file-icon {
+                        opacity: 0.5;
+
+                        svg {
+                            width: 60px;
+                            height: 60px;
+                            color: var(--text-color);
+                        }
+                    }
+                }
+
+                img,
+                video,
+                audio {
+                    display: none;
+                    max-width: 100%;
+                    max-height: 65vh;
+                    object-fit: contain;
+                    border-radius: 4px;
+                }
+            }
+
+            .file-modal-info {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                min-width: 250px;
+                justify-content: space-between;
+
+                .file-properties {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                    padding: 15px;
+
+                    div {
+                        display: flex;
+                        align-items: center;
+                        padding: 8px;
+                        gap: 3px;
+
+                        .feather-icon {
+                            margin-right: 4px;
+                            opacity: 0.7;
+
+                            width: 18px;
+                            height: 18px;
+                        }
+
+                        &:hover {
+                            background-color: rgba(128, 128, 128, 0.1);
+                        }
+                    }
+                }
+
+                .file-actions {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+
+                    .toggle-visibility-button {
+                        width: 100%;
+                        padding: 10px 16px;
+                        color: light-dark(rgb(0, 100, 200), rgb(100, 150, 255));
+                        border-color: light-dark(rgb(0, 100, 200), rgb(100, 150, 255)) !important;
+                        background-color: light-dark(rgb(240, 245, 255), transparent);
+                        font-weight: bold;
+
+                        &:hover {
+                            background-color: light-dark(rgb(0, 100, 200), rgb(0, 80, 160));
+                            border-color: light-dark(rgb(0, 80, 160), rgb(0, 80, 160)) !important;
+                            color: white;
+                            transition-duration: .2s;
+                        }
+                    }
+
+                    .delete-button {
+                        width: 100%;
+                        padding: 10px 16px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.no-scroll {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .file-modal-contents {
+        flex-direction: column !important;
+
+        .file-big-preview {
+            max-width: none !important;
         }
     }
 }

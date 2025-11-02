@@ -66,7 +66,12 @@ function showModal(elem) {
         fileModalOriginalFilename.parentElement.style.display = 'none';
     }
 
-    fileModalViews.textContent = elem.parentElement.dataset.views;
+    let views = parseInt(elem.parentElement.dataset.views, 10);
+
+    fileModalViews.textContent = `${views} view`;
+    if (views > 1) {
+        fileModalViews.textContent += 's';
+    }
 
     fileModalFilesize.textContent = elem.parentElement.dataset.filesize;
     fileModalFilesizeWrapper.title = `${elem.parentElement.dataset.filesizebytes} bytes`;

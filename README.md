@@ -2,9 +2,9 @@
 
 Simple imagehost written in Golang
 
-Main page             | Account page             | Admin page
-:-------------------------:|:-------------------------:|:-------------------------:
-![CleanShot 2025-06-22 at 17 58 36@2x](https://github.com/user-attachments/assets/521c2d2d-b062-4758-9f9a-c7a847be13e5)  |  ![CleanShot 2025-06-22 at 17 59 34@2x](https://github.com/user-attachments/assets/e40a8d60-4d43-4e63-8d56-700e2f963cbc) | ![CleanShot 2025-06-22 at 18 00 01@2x](https://github.com/user-attachments/assets/264aeac4-c926-45ae-9b59-8c49ce5467b1)
+Main page             | Account page             | File modal              | Admin page
+:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
+![screenshot](https://github.com/user-attachments/assets/c74b9b8d-8a0f-4322-b44a-745d229c4710)  |  ![screenshot](https://github.com/user-attachments/assets/1bb29030-b5e1-4c5e-a8d4-0ae94b252435)  |  ![screenshot](https://github.com/user-attachments/assets/32c43f99-4a21-4fee-ab3d-b675fc6d903e)  |  ![screenshot](https://github.com/user-attachments/assets/34cdfcde-e69d-4846-b2ac-68bfd576a1c1)
 
 # Features
 - Easy social login via github

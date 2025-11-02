@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"strconv"
 	"time"
@@ -538,7 +539,7 @@ func (db *Database) getFileByName(fileName string) (file Files, err error) {
 func (db *Database) bumpFileViews(fileName string, ip string) (err error) {
 	h := sha1.New()
 	h.Write([]byte(ip))
-	ipHash := string(h.Sum(nil))
+	ipHash := hex.EncodeToString(h.Sum(nil))
 
 	var fileID uint
 	if err = db.Model(&Files{}).

@@ -17,7 +17,7 @@ testers.nixosTest {
   };
 
   nodes.machine = { ... }: {
-    imports = [ ../module.nix ];
+    imports = [ ./module.nix ];
     services.imagehost = {
       enable = true;
       createDbLocally = true;

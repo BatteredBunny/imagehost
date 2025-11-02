@@ -169,6 +169,27 @@ button, input[type="submit"] {
     }
 }
 
+@media (max-width: 420px) {
+    #topbar {
+        justify-content: center;
+    }
+
+    .topbar-option {
+        span {
+            display: none;
+        }
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    h1 {
+        text-align: center;
+    }
+}
+
 .badge {
     border: 1px solid var(--menu-border-color);
     border-radius: 10px;
@@ -181,8 +202,4 @@ button, input[type="submit"] {
         flex-direction: row;
         gap: 10px;
     }
-}
-
-.bold {
-    font-weight: bold;
 }

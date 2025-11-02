@@ -1,46 +1,49 @@
 <div id="topbar">
     <div class="left">
-        <a class="topbar-option" href="/">
+        <a class="topbar-option" href="/" title="home">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#home" />
             </svg>
             <span>Home</span>
         </a>
         {{ if .LoggedIn }}
-        <a class="topbar-option" href="/user">
+        <a class="topbar-option" href="/user" title="account">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#user" />
             </svg>
             <span>Account {{ .AccountID }}</span>
         </a>
         {{ if .IsAdmin }}
-        <a class="topbar-option" href="/admin">
+        <a class="topbar-option" href="/admin" title="admin panel">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#server" />
             </svg>
             <span>Admin</span>
         </a>
         {{ end }}
-        <a class="topbar-option" href="/logout">
+        <a class="topbar-option" href="/logout" title="logout">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#log-out" />
             </svg>
             <span>Logout</span>
         </a>
         {{ else }}
-        <a class="topbar-option" href="/login">
+        <a class="topbar-option" href="/login" title="login">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#log-in" />
             </svg>
             <span>Login</span>
         </a>
-        <a class="topbar-option" href="/register">
+        <a class="topbar-option" href="/register" title="register">
+            <svg class="feather-icon">
+                <use href="/public/assets/feather-sprite.svg#user-plus" />
+            </svg>
             <span>Register</span>
         </a>
         {{ end }}
     </div>
     <div class="right">
-        <a class="topbar-option" href="https://github.com/BatteredBunny/imagehost">
+        <a class="topbar-option" href="https://github.com/BatteredBunny/imagehost" title="code" target="_blank" rel="noopener noreferrer">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#git-merge" />
             </svg>

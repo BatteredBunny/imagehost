@@ -33,7 +33,7 @@
 
     <div class="container">
         <h1>File host</h1>
-        <code>curl -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
+        <code>curl -X POST -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
 
         <div class="setting-group">
             <h2>Upload</h2>

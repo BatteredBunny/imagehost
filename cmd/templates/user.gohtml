@@ -79,7 +79,7 @@
                             </div>
                             {{ end }}
                         </div>
-                        <div class="file-name">{{ .FileName }}</div>
+                        <div class="file-name">{{ if .OriginalFileName }}{{ .OriginalFileName }}{{ else }}{{ .FileName }}{{ end }}</div>
                     </div>
 
                     <div class="file-info">
@@ -99,13 +99,6 @@
                             <span>{{ .Views }} view</span>
                         </div>
 
-                        <div class="file-size" title="{{ .FileSize }} bytes">
-                            <svg class="feather-icon">
-                                <use href="/public/assets/feather-sprite.svg#hard-drive" />
-                            </svg>
-                            <span>{{ humanizeBytes .FileSize }}</span>
-                        </div>
-
                         <div class="visbility-status">
                             {{ if .Public }}
                             <svg class="feather-icon">
@@ -121,12 +114,10 @@
                         </div>
                     </div>
 
-                    <div class="file-actions">
-                        <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
-                            <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                            <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
-                        </form>
-                    </div>
+                    <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
+                        <input type="text" name="file_name" value="{{ .FileName }}" hidden>
+                        <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
+                    </form>
                 </div>
                 {{ end }}
             </div>
@@ -134,7 +125,12 @@
             <div id="file-modal" class="file-modal-hidden">
                 <div class="file-modal-window">
                     <div class="file-modal-titlebar">
-                        <h2 id="file-modal-filename">File</h2>
+                        <a id="file-modal-filename-url" target="_blank" rel="noopener noreferrer">
+                            <svg class="feather-icon">
+                                <use href="/public/assets/feather-sprite.svg#share" />
+                            </svg>
+                            <span id="file-modal-filename">File</span>
+                        </a>
                         <button class="file-modal-close" onclick="closeModal()">
                             <svg class="feather-icon">
                                 <use href="/public/assets/feather-sprite.svg#x" />

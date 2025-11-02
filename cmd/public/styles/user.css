@@ -96,16 +96,14 @@
                 }
             }
 
-            .file-actions {
+            .delete-button-form {
                 margin-top: auto;
                 display: flex;
                 flex-direction: column;
                 gap: 5px;
 
-                .delete-button-form {
-                    .delete-button {
-                        width: 100%;
-                    }
+                .delete-button {
+                    width: 100%;
                 }
             }
         }
@@ -257,11 +255,21 @@
             padding-bottom: 10px;
             border-bottom: 1px solid var(--menu-border-color);
 
-            h2 {
+            #file-modal-filename-url {
                 margin: 0;
                 font-size: 1.2rem;
                 word-break: break-word;
                 max-width: calc(100% - 40px);
+
+                color: var(--text-color);
+
+                svg {
+                    color: var(--text-color);
+                }
+
+                &:hover {
+                    text-decoration: underline;
+                }
             }
 
             .file-modal-close {

@@ -10,6 +10,7 @@ const filePreviewAudio = document.getElementById('file-preview-audio');
 const filePreviewGeneric = document.getElementById('file-preview-generic');
 
 const fileModalFilename = document.getElementById('file-modal-filename');
+const fileModalFilenameUrl = document.getElementById('file-modal-filename-url');
 const fileModalOriginalFilename = document.getElementById('file-modal-original-filename');
 
 const fileModalViews = document.getElementById('file-modal-views');
@@ -58,6 +59,7 @@ function showModal(elem) {
     }
 
     fileModalFilename.textContent = elem.parentElement.dataset.filename;
+    fileModalFilenameUrl.href = `/${elem.parentElement.dataset.filename}`;
 
     if (elem.parentElement.dataset.originalfilename !== '') {
         fileModalOriginalFilename.parentElement.style.display = 'block';

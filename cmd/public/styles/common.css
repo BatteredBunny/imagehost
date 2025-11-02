@@ -140,7 +140,7 @@ button, input[type="submit"] {
     padding: 10px;
     justify-content: space-between;
 
-    background: rgb(from var(--menu-bg-color) r g b / 90%);
+    background-color: var(--menu-bg-color);
 
     border-bottom: 1px solid var(--menu-border-color);
 

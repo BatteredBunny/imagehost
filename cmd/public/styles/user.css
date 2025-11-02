@@ -35,6 +35,8 @@
                 color: var(--text-color);
                 margin-bottom: 10px;
 
+                cursor: pointer;
+
                 .file-thumbnail {
                     width: 150px;
                     height: 150px;

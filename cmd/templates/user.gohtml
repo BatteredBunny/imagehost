@@ -46,6 +46,7 @@
                 {{ range .Files }}
                 <div class="file-entry"
                     data-filename="{{ .FileName }}"
+                    data-originalfilename="{{ .OriginalFileName }}"
                     data-filesize="{{ humanizeBytes .FileSize }}"
                     data-filesizebytes="{{ .FileSize }}"
                     data-isimage="{{ mimeIsImage .MimeType }}"
@@ -158,6 +159,9 @@
 
                         <div class="file-modal-info">
                             <div class="file-properties">
+                                <div class="original-file-name">
+                                    <code id="file-modal-original-filename"></code>
+                                </div>
                                 <div class="views">
                                     <svg class="feather-icon">
                                         <use href="/public/assets/feather-sprite.svg#eye" />

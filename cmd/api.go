@@ -225,13 +225,15 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 		return
 	}
 
-	fileRaw, _, err := c.Request.FormFile("file")
+	fileRaw, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
 		c.String(http.StatusBadRequest, "No file provided")
 		c.Abort()
 		return
 	}
 	defer fileRaw.Close()
+
+	originalFileName := fileHeader.Filename
 
 	file, err := io.ReadAll(fileRaw)
 	if err != nil {
@@ -260,11 +262,12 @@ func (app *Application) uploadFileAPI(c *gin.Context) {
 
 	input := CreateFileEntryInput{
 		files: Files{
-			FileName:   fullFileName,
-			FileSize:   uint(len(file)),
-			MimeType:   mime.String(),
-			ExpiryDate: expiryDate,
-			Public:     true,
+			FileName:         fullFileName,
+			OriginalFileName: originalFileName,
+			FileSize:         uint(len(file)),
+			MimeType:         mime.String(),
+			ExpiryDate:       expiryDate,
+			Public:           true,
 		},
 	}
 

@@ -10,6 +10,8 @@ const filePreviewAudio = document.getElementById('file-preview-audio');
 const filePreviewGeneric = document.getElementById('file-preview-generic');
 
 const fileModalFilename = document.getElementById('file-modal-filename');
+const fileModalOriginalFilename = document.getElementById('file-modal-original-filename');
+
 const fileModalViews = document.getElementById('file-modal-views');
 
 const fileModalFilesize = document.getElementById('file-modal-filesize');
@@ -20,6 +22,7 @@ const fileModalCreatedAtWrapper = document.getElementById('file-modal-createdat-
 
 const fileModalExpiryDate = document.getElementById('file-modal-expirydate');
 const fileModalExpiryDateWrapper = document.getElementById('file-modal-expirydate-wrapper');
+
 const fileModalVisibility = document.getElementById('file-modal-visibility');
 const fileModalVisibilityIcon = document.getElementById('file-modal-visibility-icon');
 
@@ -55,12 +58,21 @@ function showModal(elem) {
     }
 
     fileModalFilename.textContent = elem.parentElement.dataset.filename;
+
+    if (elem.parentElement.dataset.originalfilename !== '') {
+        fileModalOriginalFilename.parentElement.style.display = 'block';
+        fileModalOriginalFilename.textContent = elem.parentElement.dataset.originalfilename;
+    } else {
+        fileModalOriginalFilename.parentElement.style.display = 'none';
+    }
+
     fileModalViews.textContent = elem.parentElement.dataset.views;
+
     fileModalFilesize.textContent = elem.parentElement.dataset.filesize;
     fileModalFilesizeWrapper.title = `${elem.parentElement.dataset.filesizebytes} bytes`;
 
     fileModalCreatedAt.textContent = elem.parentElement.dataset.createdat;
-    fileModalCreatedAtWrapper.title = elem.parentElement.dataset.createdatrelative;
+    fileModalCreatedAtWrapper.title = `Uploaded ${elem.parentElement.dataset.createdatrelative}`;
 
     if (elem.parentElement.dataset.expirydate !== '') {
         fileModalExpiryDateWrapper.style.display = 'flex';

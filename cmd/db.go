@@ -68,8 +68,7 @@ type Files struct {
 
 	FileName string // Newly generated file name
 
-	// TODO: store and show original file name
-	OriginalFileName string
+	OriginalFileName string // Original file name from upload
 	FileSize         uint
 	MimeType         string
 

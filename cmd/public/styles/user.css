@@ -1,8 +1,5 @@
 #social-login {
     .linked-account {
-        display: flex;
-        align-items: center;
-        gap: 5px;
         color: var(--text-color);
     }
 }

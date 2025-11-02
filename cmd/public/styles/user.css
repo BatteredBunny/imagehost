@@ -98,13 +98,6 @@
 
             .delete-button-form {
                 margin-top: auto;
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-
-                .delete-button {
-                    width: 100%;
-                }
             }
         }
     }

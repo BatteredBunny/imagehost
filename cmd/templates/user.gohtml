@@ -114,10 +114,7 @@
                         </div>
                     </div>
 
-                    <form class="delete-button-form" action="/api/file/delete" method="POST" enctype="multipart/form-data">
-                        <input type="text" name="file_name" value="{{ .FileName }}" hidden>
-                        <input class="delete-button" type="submit" value="Delete" data-confirm='Are you sure you want to delete "{{ .FileName }}"?'>
-                    </form>
+                    <button class="delete-button-form delete-button" onclick="deleteFileGrid(this)">Delete</button>
                 </div>
                 {{ end }}
             </div>
@@ -282,8 +279,11 @@
         </div>
     </div>
 
-    <script src="/public/js/deleteButtonConfirm.js"></script>
-    <script src="/public/js/fileModal.js"></script>
+    <footer>
+        <script src="/public/js/deleteButtonConfirm.js"></script>
+        <script type="module" src="/public/js/fileModal.js"></script>
+        <script type="module" src="/public/js/fileGrid.js"></script>
+    </footer>
 </body>
 
 </html>

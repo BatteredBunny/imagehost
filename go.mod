@@ -3,7 +3,7 @@ module github.com/BatteredBunny/imagehost
 go 1.25.2
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/aws/aws-sdk-go v1.55.8 // On old version due to backblaze support
 	github.com/didip/tollbooth/v8 v8.0.1
 	github.com/dustin/go-humanize v1.0.1

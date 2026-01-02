@@ -1,40 +1,40 @@
-<div id="topbar">
-    <div class="left">
-        <a class="topbar-option" href="/" title="home">
+<div id="toolbar">
+    <div class="toolbar-nav">
+        <a class="toolbar-option{{ if eq .CurrentPage "home" }} active{{ end }}" href="/" title="home">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#home" />
             </svg>
             <span>Home</span>
         </a>
         {{ if .LoggedIn }}
-        <a class="topbar-option" href="/user" title="account">
+        <a class="toolbar-option{{ if eq .CurrentPage "user" }} active{{ end }}" href="/user" title="account">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#user" />
             </svg>
-            <span>Account {{ .AccountID }}</span>
+            <span>Account</span>
         </a>
         {{ if .IsAdmin }}
-        <a class="topbar-option" href="/admin" title="admin panel">
+        <a class="toolbar-option{{ if eq .CurrentPage "admin" }} active{{ end }}" href="/admin" title="admin panel">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#server" />
             </svg>
             <span>Admin</span>
         </a>
         {{ end }}
-        <a class="topbar-option" href="/logout" title="logout">
+        <a class="toolbar-option" href="/logout" title="logout">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#log-out" />
             </svg>
             <span>Logout</span>
         </a>
         {{ else }}
-        <a class="topbar-option" href="/login" title="login">
+        <a class="toolbar-option{{ if eq .CurrentPage "login" }} active{{ end }}" href="/login" title="login">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#log-in" />
             </svg>
             <span>Login</span>
         </a>
-        <a class="topbar-option" href="/register" title="register">
+        <a class="toolbar-option{{ if eq .CurrentPage "register" }} active{{ end }}" href="/register" title="register">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#user-plus" />
             </svg>
@@ -42,8 +42,8 @@
         </a>
         {{ end }}
     </div>
-    <div class="right">
-        <a class="topbar-option" href="https://github.com/BatteredBunny/imagehost" title="code" target="_blank" rel="noopener noreferrer">
+    <div class="toolbar-footer">
+        <a class="toolbar-option" href="https://github.com/BatteredBunny/imagehost" title="code" target="_blank" rel="noopener noreferrer">
             <svg class="feather-icon">
                 <use href="/public/assets/feather-sprite.svg#git-merge" />
             </svg>

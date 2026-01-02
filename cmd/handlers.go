@@ -22,6 +22,7 @@ import (
 func (app *Application) indexPage(c *gin.Context) {
 	templateInput := gin.H{
 		"Host": c.Request.Host,
+		"CurrentPage": "home",
 	}
 
 	_, account, loggedIn, err := app.validateAuthCookie(c)
@@ -119,7 +120,9 @@ func (app *Application) adminPage(c *gin.Context) {
 		return
 	}
 
-	var templateInput gin.H = make(gin.H)
+	templateInput := gin.H{
+		"CurrentPage": "admin",
+	}
 
 	if loggedIn {
 		// For top bar
@@ -165,7 +168,9 @@ func (app *Application) userPage(c *gin.Context) {
 		return
 	}
 
-	var templateInput gin.H = make(gin.H)
+	templateInput := gin.H{
+		"CurrentPage": "user",
+	}
 
 	if loggedIn && account.GithubID > 0 {
 		templateInput["LinkedWithGithub"] = true
@@ -221,6 +226,7 @@ func (app *Application) loginPage(c *gin.Context) {
 	} else {
 		c.HTML(http.StatusOK, "login.gohtml", gin.H{
 			"Providers": providers,
+			"CurrentPage": "login",
 		})
 	}
 }
@@ -237,7 +243,9 @@ func (app *Application) registerPage(c *gin.Context) {
 	if loggedIn {
 		c.Redirect(http.StatusTemporaryRedirect, "/user")
 	} else {
-		c.HTML(http.StatusOK, "register.gohtml", nil)
+		c.HTML(http.StatusOK, "register.gohtml", gin.H{
+			"CurrentPage": "register",
+		})
 	}
 }
 

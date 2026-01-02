@@ -24,8 +24,9 @@ main {
     display: flex;
     flex-direction: column;
     gap: 10px;
-
+    width: 100%;
     max-width: 1000px;
+    box-sizing: border-box;
 }
 
 :root {
@@ -133,8 +134,9 @@ input[type="submit"] {
 .delete-button {
     color: light-dark(rgb(220, 0, 0), rgb(255, 80, 80));
     border-color: light-dark(rgb(220, 0, 0), rgb(255, 80, 80)) !important;
-    background-color: light-dark(rgb(255, 240, 240), transparent);
+    background-color: light-dark(rgb(255, 240, 240), rgba(255, 80, 80, 0.1));
     font-weight: bold;
+    border-radius: 8px;
 
     &:hover {
         background-color: light-dark(rgb(220, 0, 0), rgb(200, 0, 0));
@@ -147,8 +149,9 @@ input[type="submit"] {
 .create-button {
     color: light-dark(rgb(0, 120, 212), rgb(80, 180, 255));
     border-color: light-dark(rgb(0, 120, 212), rgb(80, 180, 255)) !important;
-    background-color: light-dark(rgb(240, 248, 255), transparent);
+    background-color: light-dark(rgb(240, 248, 255), rgba(100, 150, 255, 0.1));
     font-weight: bold;
+    border-radius: 8px;
 
     &:hover {
         background-color: light-dark(rgb(0, 120, 212), rgb(0, 100, 180));
@@ -186,7 +189,6 @@ input[type="submit"] {
         gap: 12px;
         padding: 12px 20px;
         color: var(--text-color);
-        transition: all 0.2s;
 
         &:hover {
             text-decoration: none;

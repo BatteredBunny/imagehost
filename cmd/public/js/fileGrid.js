@@ -44,7 +44,7 @@ export function setVisibilityGrid(filename, isPublic) {
                 const text = visibilityStatus.querySelector('span');
 
                 if (isPublic) {
-                    icon.href.baseVal = '/public/assets/lucide-sprite.svg#unlock';
+                    icon.href.baseVal = '/public/assets/lucide-sprite.svg#lock-open';
                     text.textContent = 'Public';
                 } else {
                     icon.href.baseVal = '/public/assets/lucide-sprite.svg#lock';

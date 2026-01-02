@@ -138,7 +138,7 @@ window.closeModal = closeModal;
 function setVisibility(isPublic) {
     if (isPublic) {
         fileModalVisibility.textContent = 'Public';
-        fileModalVisibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#unlock';
+        fileModalVisibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#lock-open';
         togglePublicButton.textContent = 'Make Private';
     } else {
         fileModalVisibility.textContent = 'Private';

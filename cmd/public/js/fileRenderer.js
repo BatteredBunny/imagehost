@@ -57,7 +57,7 @@ function createFileEntry(file) {
     const visibilityIcon = entry.querySelector('.visibility-icon');
     const visibilityText = entry.querySelector('.visibility-text');
     if (file.Public) {
-        visibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#unlock';
+        visibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#lock-open';
         visibilityText.textContent = 'Public';
     } else {
         visibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#lock';

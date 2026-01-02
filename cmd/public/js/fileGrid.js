@@ -44,10 +44,10 @@ export function setVisibilityGrid(filename, isPublic) {
                 const text = visibilityStatus.querySelector('span');
 
                 if (isPublic) {
-                    icon.href.baseVal = '/public/assets/feather-sprite.svg#unlock';
+                    icon.href.baseVal = '/public/assets/lucide-sprite.svg#unlock';
                     text.textContent = 'Public';
                 } else {
-                    icon.href.baseVal = '/public/assets/feather-sprite.svg#lock';
+                    icon.href.baseVal = '/public/assets/lucide-sprite.svg#lock';
                     text.textContent = 'Private';
                 }
             }

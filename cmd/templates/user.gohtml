@@ -30,8 +30,8 @@
 
                 {{ if .LinkedWithGithub }}
                 <a href="https://github.com/{{ .GithubUsername }}" target="_blank" class="linked-account">
-                    <svg class="feather-icon">
-                        <use href="/public/assets/feather-sprite.svg#github" />
+                    <svg class="lucide-icon" viewBox="0 0 24 24">
+                        <use href="/public/assets/lucide-sprite.svg#github" />
                     </svg>
                     <span>{{ .GithubUsername }}</span>
                 </a>
@@ -63,16 +63,16 @@
 
                 <div id="pagination-controls" style="display: none;">
                     <button id="prev-page-btn" class="pagination-button" onclick="prevPage()">
-                        <svg class="feather-icon">
-                            <use href="/public/assets/feather-sprite.svg#chevron-left" />
+                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                            <use href="/public/assets/lucide-sprite.svg#chevron-left" />
                         </svg>
                         <span>Previous</span>
                     </button>
                     <span id="page-info"></span>
                     <button id="next-page-btn" class="pagination-button" onclick="nextPage()">
                         <span>Next</span>
-                        <svg class="feather-icon">
-                            <use href="/public/assets/feather-sprite.svg#chevron-right" />
+                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                            <use href="/public/assets/lucide-sprite.svg#chevron-right" />
                         </svg>
                     </button>
                 </div>
@@ -86,14 +86,14 @@
                                 <video class="preview-video" alt="Uploaded video" style="display: none;"></video>
 
                                 <div class="preview-audio file-icon" style="display: none;">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#music" />
+                                    <svg class="lucide-icon" viewBox="0 0 24 24">
+                                        <use href="/public/assets/lucide-sprite.svg#music" />
                                     </svg>
                                 </div>
 
                                 <div class="preview-generic file-icon" style="display: none;">
-                                    <svg class="feather-icon">
-                                        <use href="/public/assets/feather-sprite.svg#file" />
+                                    <svg class="lucide-icon" viewBox="0 0 24 24">
+                                        <use href="/public/assets/lucide-sprite.svg#file" />
                                     </svg>
                                 </div>
                             </div>
@@ -102,21 +102,21 @@
 
                         <div class="file-info">
                             <div class="expires-info" style="display: none;">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#trash-2" />
+                                <svg class="lucide-icon" viewBox="0 0 24 24">
+                                    <use href="/public/assets/lucide-sprite.svg#trash-2" />
                                 </svg>
                                 <span class="expiry-text"></span>
                             </div>
 
                             <div class="views">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#eye" />
+                                <svg class="lucide-icon" viewBox="0 0 24 24">
+                                    <use href="/public/assets/lucide-sprite.svg#eye" />
                                 </svg>
                                 <span class="views-text"></span>
                             </div>
 
                             <div class="visbility-status">
-                                <svg class="feather-icon">
+                                <svg class="lucide-icon" viewBox="0 0 24 24">
                                     <use class="visibility-icon" />
                                 </svg>
                                 <span class="visibility-text"></span>
@@ -131,14 +131,14 @@
                     <div class="file-modal-window">
                         <div class="file-modal-titlebar">
                             <a id="file-modal-filename-url" target="_blank" rel="noopener noreferrer">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#share" />
+                                <svg class="lucide-icon" viewBox="0 0 24 24">
+                                    <use href="/public/assets/lucide-sprite.svg#share" />
                                 </svg>
                                 <span id="file-modal-filename">File</span>
                             </a>
                             <button class="file-modal-close" onclick="closeModal()">
-                                <svg class="feather-icon">
-                                    <use href="/public/assets/feather-sprite.svg#x" />
+                                <svg class="lucide-icon" viewBox="0 0 24 24">
+                                    <use href="/public/assets/lucide-sprite.svg#x" />
                                 </svg>
                             </button>
                         </div>
@@ -151,8 +151,8 @@
 
                                 <a id="file-preview-generic">
                                     <div class="file-icon">
-                                        <svg class="feather-icon">
-                                            <use href="/public/assets/feather-sprite.svg#file" />
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#file" />
                                         </svg>
                                     </div>
                                 </a>
@@ -164,35 +164,35 @@
                                         <code id="file-modal-original-filename"></code>
                                     </div>
                                     <div class="views">
-                                        <svg class="feather-icon">
-                                            <use href="/public/assets/feather-sprite.svg#eye" />
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#eye" />
                                         </svg>
                                         <span id="file-modal-views"></span>
                                     </div>
 
                                     <div id="file-modal-filesize-wrapper" class="file-size">
-                                        <svg class="feather-icon">
-                                            <use href="/public/assets/feather-sprite.svg#hard-drive" />
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#hard-drive" />
                                         </svg>
                                         <span id="file-modal-filesize"></span>
                                     </div>
 
                                     <div id="file-modal-createdat-wrapper">
-                                        <svg class="feather-icon">
-                                            <use href="/public/assets/feather-sprite.svg#clock" />
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#clock" />
                                         </svg>
                                         <span id="file-modal-createdat"></span>
                                     </div>
 
                                     <div id="file-modal-expirydate-wrapper" class="expires-info">
-                                        <svg class="feather-icon">
-                                            <use href="/public/assets/feather-sprite.svg#trash-2" />
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#trash-2" />
                                         </svg>
                                         <span id="file-modal-expirydate"></span>
                                     </div>
 
                                     <div class="visbility-status">
-                                        <svg class="feather-icon">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
                                             <use id="file-modal-visibility-icon" />
                                         </svg>
                                         <span id="file-modal-visibility"></span>

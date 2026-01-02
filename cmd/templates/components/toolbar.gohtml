@@ -1,42 +1,42 @@
 <div id="toolbar">
     <div class="toolbar-nav">
         <a class="toolbar-option{{ if eq .CurrentPage "home" }} active{{ end }}" href="/" title="home">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#home" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#house" />
             </svg>
             <span>Home</span>
         </a>
         {{ if .LoggedIn }}
         <a class="toolbar-option{{ if eq .CurrentPage "user" }} active{{ end }}" href="/user" title="account">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#user" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#user" />
             </svg>
             <span>Account</span>
         </a>
         {{ if .IsAdmin }}
         <a class="toolbar-option{{ if eq .CurrentPage "admin" }} active{{ end }}" href="/admin" title="admin panel">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#server" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#server" />
             </svg>
             <span>Admin</span>
         </a>
         {{ end }}
         <a class="toolbar-option" href="/logout" title="logout">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#log-out" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#log-out" />
             </svg>
             <span>Logout</span>
         </a>
         {{ else }}
         <a class="toolbar-option{{ if eq .CurrentPage "login" }} active{{ end }}" href="/login" title="login">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#log-in" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#log-in" />
             </svg>
             <span>Login</span>
         </a>
         <a class="toolbar-option{{ if eq .CurrentPage "register" }} active{{ end }}" href="/register" title="register">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#user-plus" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#user-plus" />
             </svg>
             <span>Register</span>
         </a>
@@ -44,8 +44,8 @@
     </div>
     <div class="toolbar-footer">
         <a class="toolbar-option" href="https://github.com/BatteredBunny/imagehost" title="code" target="_blank" rel="noopener noreferrer">
-            <svg class="feather-icon">
-                <use href="/public/assets/feather-sprite.svg#git-merge" />
+            <svg class="lucide-icon" viewBox="0 0 24 24">
+                <use href="/public/assets/lucide-sprite.svg#git-merge" />
             </svg>
             <span>Code</span>
         </a>

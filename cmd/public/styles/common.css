@@ -31,19 +31,19 @@ main {
 :root {
     color-scheme: light dark;
 
-    --background-color: light-dark(white, #1e1e1e);
+    --background-color: light-dark(white, #0d0d0d);
     --text-color: light-dark(black, white);
-    --link-color: light-dark(purple, orange);
+    --link-color: light-dark(purple, #b794f6);
 
-    --button-border-color: light-dark(#cccccc, #666666);
+    --button-border-color: light-dark(#cccccc, #404040);
 
-    --menu-bg-color: light-dark(#f0f0f0, #333333);
-    --menu-border-color: light-dark(#cccccc, #666666);
+    --menu-bg-color: light-dark(#f0f0f0, #1a1a1a);
+    --menu-border-color: light-dark(#cccccc, #404040);
 
-    --alternative-bg-color: light-dark(#e0e0e0, #444444);
+    --alternative-bg-color: light-dark(#e0e0e0, #262626);
     --alternative-text-color: light-dark(black, white);
 
-    --warning-bg-color: light-dark(#ffcccc, #813737);
+    --warning-bg-color: light-dark(#ffcccc, #5a1f1f);
     --warning-border-color: #ff0000;
     --warning-text-color: #ff0000;
 }
@@ -96,7 +96,7 @@ input[type="submit"] {
     transition-duration: .15s;
 }
 
-.feather-icon {
+.lucide-icon {
     width: 14px;
     height: 14px;
     stroke: currentColor;

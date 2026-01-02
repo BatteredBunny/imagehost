@@ -57,10 +57,10 @@ function createFileEntry(file) {
     const visibilityIcon = entry.querySelector('.visibility-icon');
     const visibilityText = entry.querySelector('.visibility-text');
     if (file.Public) {
-        visibilityIcon.href.baseVal = '/public/assets/feather-sprite.svg#unlock';
+        visibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#unlock';
         visibilityText.textContent = 'Public';
     } else {
-        visibilityIcon.href.baseVal = '/public/assets/feather-sprite.svg#lock';
+        visibilityIcon.href.baseVal = '/public/assets/lucide-sprite.svg#lock';
         visibilityText.textContent = 'Private';
     }
 
@@ -83,6 +83,8 @@ export async function loadFiles(skip = 0, sort = 'created_at', desc = true) {
     if (isLoading) return;
 
     isLoading = true;
+    currentSort = sort;
+    currentDesc = desc;
 
     const fileGrid = document.querySelector('.file-grid');
     const loadingOverlay = document.getElementById('file-grid-loading-overlay');

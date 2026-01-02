@@ -64,11 +64,30 @@ a {
     }
 }
 
-.setting-group {
-    border: 2px solid var(--menu-border-color);
+setting-group {
+    border: 1px solid var(--menu-border-color);
     background-color: var(--menu-bg-color);
-    border-radius: 10px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    .setting-group-header {
+        margin: 0;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--menu-border-color);
+        background-color: var(--alternative-bg-color);
+
+        h2 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+    }
+
+    .setting-group-body {
+        padding: 20px;
+    }
 }
 
 .warning-modal {

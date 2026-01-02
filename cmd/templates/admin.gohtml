@@ -19,128 +19,138 @@
         <div class="container">
             <h1>Admin</h1>
 
-            <div id="server-config-panel" class="setting-group">
-                <h2>Server configuration</h2>
-                <div>Max upload size: <span title="{{ .MaxUploadSize }} bytes">{{ humanizeBytes .MaxUploadSize }}</span>
+            <setting-group id="server-config-panel">
+                <div class="setting-group-header">
+                    <h2>Server configuration</h2>
                 </div>
-            </div>
 
-            <div id="users-panel" class="setting-group">
-                <h2>Users</h2>
-                <div class="users-grid">
-                    {{ range .Users }}
-                    <div class="user-card">
-                        <div class="top-row">
-                            <div class="left">User {{ .ID }}</div>
-                            <div class="right">
-                                {{ if .You }}<div class="badge">You</div>{{ end }}
-                                <div class="badge">{{ .AccountType }}</div>
+                <div class="setting-group-body">
+                    <p>Max upload size: <span title="{{ .MaxUploadSize }} bytes">{{ humanizeBytes .MaxUploadSize }}</span>
+                    </p>
+                </div>
+            </setting-group>
+
+            <setting-group id="users-panel">
+                <div class="setting-group-header">
+                    <h2>Users</h2>
+                </div>
+
+                <div class="setting-group-body">
+                    <div class="users-grid">
+                        {{ range .Users }}
+                        <div class="user-card">
+                            <div class="top-row">
+                                <div class="left">User {{ .ID }}</div>
+                                <div class="right">
+                                    {{ if .You }}<div class="badge">You</div>{{ end }}
+                                    <div class="badge">{{ .AccountType }}</div>
+                                </div>
+                            </div>
+
+                            <div class="middle-row">
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#github" />
+                                        </svg>
+                                        <span>Github</s>
+                                    </div>
+                                    <div class="value">{{ .GithubUsername }}</div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#calendar" />
+                                        </svg>
+                                        <span>Creation</span>
+                                    </div>
+                                    <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#calendar" />
+                                        </svg>
+                                        <span>Last activity</span>
+                                    </div>
+                                    <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})
+                                    </div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#user" />
+                                        </svg>
+                                        <span>Invited by</span>
+                                    </div>
+                                    <div class="value">{{ .InvitedBy }}</div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#hard-drive" />
+                                        </svg>
+                                        <span>Space used</span>
+                                    </div>
+                                    <div class="value" title="{{ .SpaceUsed }} bytes">{{ humanizeBytes .SpaceUsed }}</div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#file" />
+                                        </svg>
+                                        <span>Files uploaded</span>
+                                    </div>
+                                    <div class="value">{{ .FilesUploaded }}</div>
+                                </div>
+                                <div class="entry">
+                                    <div class="name">
+                                        <svg class="lucide-icon" viewBox="0 0 24 24">
+                                            <use href="/public/assets/lucide-sprite.svg#key" />
+                                        </svg>
+                                        <span>Sessions/Upload tokens</span>
+                                    </div>
+                                    <div class="value">{{ .SessionsCount }}/{{ .UploadTokensCount }}</div>
+                                </div>
+                            </div>
+
+                            <div class="bottom-row">
+                                {{ if not .You }}
+                                <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
+                                    <input type="text" name="id" value="{{ .ID }}" hidden>
+                                    <button class="delete-button" type="submit"
+                                        data-confirm="Are you sure you want to delete this user? This action cannot be undone and all their data will be permanently deleted.">Delete
+                                        user</button>
+                                </form>
+                                {{ end }}
+                                <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
+                                    <input type="text" name="id" value="{{ .ID }}" hidden>
+                                    <button class="delete-button" type="submit"
+                                        data-confirm="Are you sure you want to delete all files for this user?">Delete
+                                        files</button>
+                                </form>
+                                <form action="/api/admin/delete_sessions" method="POST" enctype="multipart/form-data">
+                                    <input type="text" name="id" value="{{ .ID }}" hidden>
+                                    <button class="delete-button" type="submit"
+                                        data-confirm="Are you sure you want to delete all sessions for this user? They will be logged out.">Delete
+                                        sessions</button>
+                                </form>
+                                <form action="/api/admin/delete_upload_tokens" method="POST" enctype="multipart/form-data">
+                                    <input type="text" name="id" value="{{ .ID }}" hidden>
+                                    <button class="delete-button" type="submit"
+                                        data-confirm="Are you sure you want to delete all upload tokens for this user?">Delete
+                                        upload tokens</button>
+                                </form>
+                                <form action="/api/admin/give_invite_code" method="POST" enctype="multipart/form-data">
+                                    <input type="text" name="id" value="{{ .ID }}" hidden>
+                                    <button class="create-button" type="submit">Give invite token</button>
+                                </form>
                             </div>
                         </div>
-
-                        <div class="middle-row">
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#github" />
-                                    </svg>
-                                    <span>Github</s>
-                                </div>
-                                <div class="value">{{ .GithubUsername }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#calendar" />
-                                    </svg>
-                                    <span>Creation</span>
-                                </div>
-                                <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#calendar" />
-                                    </svg>
-                                    <span>Last activity</span>
-                                </div>
-                                <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})
-                                </div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#user" />
-                                    </svg>
-                                    <span>Invited by</span>
-                                </div>
-                                <div class="value">{{ .InvitedBy }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#hard-drive" />
-                                    </svg>
-                                    <span>Space used</span>
-                                </div>
-                                <div class="value" title="{{ .SpaceUsed }} bytes">{{ humanizeBytes .SpaceUsed }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#file" />
-                                    </svg>
-                                    <span>Files uploaded</span>
-                                </div>
-                                <div class="value">{{ .FilesUploaded }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="name">
-                                    <svg class="lucide-icon" viewBox="0 0 24 24">
-                                        <use href="/public/assets/lucide-sprite.svg#key" />
-                                    </svg>
-                                    <span>Sessions/Upload tokens</span>
-                                </div>
-                                <div class="value">{{ .SessionsCount }}/{{ .UploadTokensCount }}</div>
-                            </div>
-                        </div>
-
-                        <div class="bottom-row">
-                            {{ if not .You }}
-                            <form action="/api/admin/delete_user" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit"
-                                    data-confirm="Are you sure you want to delete this user? This action cannot be undone and all their data will be permanently deleted.">Delete
-                                    user</button>
-                            </form>
-                            {{ end }}
-                            <form action="/api/admin/delete_files" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit"
-                                    data-confirm="Are you sure you want to delete all files for this user?">Delete
-                                    files</button>
-                            </form>
-                            <form action="/api/admin/delete_sessions" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit"
-                                    data-confirm="Are you sure you want to delete all sessions for this user? They will be logged out.">Delete
-                                    sessions</button>
-                            </form>
-                            <form action="/api/admin/delete_upload_tokens" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="delete-button" type="submit"
-                                    data-confirm="Are you sure you want to delete all upload tokens for this user?">Delete
-                                    upload tokens</button>
-                            </form>
-                            <form action="/api/admin/give_invite_code" method="POST" enctype="multipart/form-data">
-                                <input type="text" name="id" value="{{ .ID }}" hidden>
-                                <button class="create-button" type="submit">Give invite token</button>
-                            </form>
-                        </div>
+                        {{ end }}
                     </div>
-                    {{ end }}
                 </div>
-            </div>
+            </setting-group>
         </div>
     </main>
 

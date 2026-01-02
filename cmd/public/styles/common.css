@@ -1,8 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap');
 
 html,
 body {
-    font-family: "Open Sans", sans-serif;
+    font-family: "IBM Plex Sans", sans-serif;
     padding: 0px;
     margin: 0px;
 }
@@ -46,6 +46,10 @@ main {
     --warning-bg-color: light-dark(#ffcccc, #5a1f1f);
     --warning-border-color: #ff0000;
     --warning-text-color: #ff0000;
+}
+
+input, code, button, select {
+    font-family: inherit;
 }
 
 #mascot {

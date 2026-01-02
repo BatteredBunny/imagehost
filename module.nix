@@ -1,7 +1,8 @@
-{ pkgs
-, config ? pkgs.config
-, lib ? pkgs.lib
-, ...
+{
+  pkgs,
+  config ? pkgs.config,
+  lib ? pkgs.lib,
+  ...
 }:
 let
   cfg = config.services.imagehost;

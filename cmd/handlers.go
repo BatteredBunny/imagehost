@@ -476,6 +476,7 @@ func (app *Application) fileStatsAPI(c *gin.Context) {
 type FilesApiInput struct {
 	Skip uint   `form:"skip,default=0"`          // Used for pagination
 	Sort string `form:"sort,default=created_at"` // "created_at", "views", "file_size"
+	Desc bool   `form:"desc,default=true"`       // true for descending, false for ascending
 }
 
 type FilesApiOutput struct {
@@ -518,10 +519,9 @@ func (app *Application) filesAPI(c *gin.Context) {
 
 	// Api returns 8 files at a time
 	var limit uint = 8
-	desc := true
 
 	var output FilesApiOutput
-	output.Files, err = app.db.getFilesPaginatedFromAccount(account.ID, input.Skip, limit, input.Sort, desc)
+	output.Files, err = app.db.getFilesPaginatedFromAccount(account.ID, input.Skip, limit, input.Sort, input.Desc)
 	if err != nil {
 		log.Err(err).Msg("Failed to get files from account")
 		c.AbortWithStatus(http.StatusInternalServerError)

@@ -67,16 +67,19 @@ function createFileEntry(file) {
     return entry;
 }
 
+// TODO: refactor into a class
 let currentPage = 0;
 const filesPerPage = 8;
 let totalFiles = 0;
 let isLoading = false;
+let currentSort = 'created_at';
+let currentDesc = true;
 
 export function decrementTotalFiles() {
     totalFiles--;
 }
 
-export async function loadFiles(skip = 0) {
+export async function loadFiles(skip = 0, sort = 'created_at', desc = true) {
     if (isLoading) return;
 
     isLoading = true;
@@ -93,7 +96,7 @@ export async function loadFiles(skip = 0) {
     }
 
     try {
-        const response = await fetch(`/api/account/files?skip=${skip}`, {
+        const response = await fetch(`/api/account/files?skip=${skip}&sort=${currentSort}&desc=${currentDesc}`, {
             method: 'GET',
         });
 
@@ -167,7 +170,7 @@ function hidePaginationControls() {
 
 function nextPage() {
     const skip = (currentPage + 1) * filesPerPage;
-    loadFiles(skip);
+    loadFiles(skip, currentSort, currentDesc);
 }
 
 window.nextPage = nextPage;
@@ -175,11 +178,22 @@ window.nextPage = nextPage;
 function prevPage() {
     if (currentPage > 0) {
         const skip = (currentPage - 1) * filesPerPage;
-        loadFiles(skip);
+        loadFiles(skip, currentSort, currentDesc);
     }
 }
 
 window.prevPage = prevPage;
+
+function changeSorting() {
+    let select = document.getElementById('sort-dropdown');
+
+    const [sort, order] = select.value.split(':');
+    const desc = order === 'desc';
+    currentPage = 0;
+    loadFiles(0, sort, desc);
+}
+
+window.changeSorting = changeSorting;
 
 export function reloadCurrentPage() {
     const totalPages = Math.ceil(totalFiles / filesPerPage);
@@ -189,7 +203,7 @@ export function reloadCurrentPage() {
     }
 
     let skip = currentPage * filesPerPage;
-    loadFiles(skip);
+    loadFiles(skip, currentSort, currentDesc);
     updatePaginationControls(skip);
 }
 

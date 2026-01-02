@@ -40,7 +40,17 @@
         </div>
 
         <div id="files" class="setting-group">
-            <h2>Files</h2>
+            <files-top-row>
+                <h2>Files</h2>
+                <select id="sort-dropdown" onchange="changeSorting()">
+                    <option value="created_at:desc">Newest First</option>
+                    <option value="created_at:asc">Oldest First</option>
+                    <option value="views:desc">Most Views</option>
+                    <option value="views:asc">Least Views</option>
+                    <option value="file_size:desc">Largest First</option>
+                    <option value="file_size:asc">Smallest First</option>
+                </select>
+            </files-top-row>
             <p id="files-stats"></p>
             <div class="file-grid">
                 <p id="file-grid-loading-text"></p>

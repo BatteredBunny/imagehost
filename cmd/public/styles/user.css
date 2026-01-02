@@ -5,6 +5,43 @@
 }
 
 #files {
+    files-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        h2 {
+            margin: 0;
+        }
+
+        #sort-dropdown {
+            padding: 0.6rem 2.5rem 0.6rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--menu-border-color);
+            background-color: var(--menu-bg-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+                border-color: var(--text-color);
+                background-color: var(--background-color);
+            }
+
+            &:focus {
+                outline: none;
+                border-color: var(--link-color);
+                box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.1);
+            }
+
+            option {
+                background-color: var(--menu-bg-color);
+                color: var(--text-color);
+            }
+        }
+    }
+
     .file-grid {
         display: flex;
         flex-wrap: wrap;
@@ -91,7 +128,7 @@
                 opacity: 0.8;
                 margin-bottom: 8px;
 
-                > div {
+                >div {
                     display: flex;
                     align-items: center;
                     gap: 5px;
@@ -276,7 +313,8 @@
 
                 padding-left: 10px;
 
-                .uses-left, .invite-code-expires {
+                .uses-left,
+                .invite-code-expires {
                     display: flex;
                     align-items: center;
 

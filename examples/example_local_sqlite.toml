@@ -5,3 +5,4 @@ database_connection_url = "imagehost.db"
 port = "8081"
 behind_reverse_proxy = false
 trusted_proxy = ""
+branding = "Sqlite Example"

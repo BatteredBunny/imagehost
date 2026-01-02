@@ -23,6 +23,8 @@ func (app *Application) indexPage(c *gin.Context) {
 	templateInput := gin.H{
 		"Host": c.Request.Host,
 		"CurrentPage": "home",
+		"Branding": app.config.Branding,
+		"Tagline": app.config.Tagline,
 	}
 
 	_, account, loggedIn, err := app.validateAuthCookie(c)
@@ -122,6 +124,8 @@ func (app *Application) adminPage(c *gin.Context) {
 
 	templateInput := gin.H{
 		"CurrentPage": "admin",
+		"Branding": app.config.Branding,
+		"Tagline": app.config.Tagline,
 	}
 
 	if loggedIn {
@@ -170,6 +174,8 @@ func (app *Application) userPage(c *gin.Context) {
 
 	templateInput := gin.H{
 		"CurrentPage": "user",
+		"Branding": app.config.Branding,
+		"Tagline": app.config.Tagline,
 	}
 
 	if loggedIn && account.GithubID > 0 {
@@ -227,6 +233,8 @@ func (app *Application) loginPage(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.gohtml", gin.H{
 			"Providers": providers,
 			"CurrentPage": "login",
+			"Branding": app.config.Branding,
+			"Tagline": app.config.Tagline,
 		})
 	}
 }
@@ -245,6 +253,8 @@ func (app *Application) registerPage(c *gin.Context) {
 	} else {
 		c.HTML(http.StatusOK, "register.gohtml", gin.H{
 			"CurrentPage": "register",
+			"Branding": app.config.Branding,
+			"Tagline": app.config.Tagline,
 		})
 	}
 }

@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="/public/styles/common.css">
     <link rel="stylesheet" href="/public/styles/upload.css">
     <link rel="shortcut icon" href="/public/favicon.ico" type="image/x-icon">
-    <title>File host</title>
-    <meta name="description" content="The best file host on all of interwebs">
+    <title>{{ .Branding }}</title>
+    <meta name="description" content="{{ .Tagline }}">
 </head>
 
 <body>
@@ -33,7 +33,11 @@
 
     <main>
         <div class="container">
-            <h1>File host</h1>
+            <div class="branding-title">
+                <div class="branding-main">{{ .Branding }}</div>
+                <div class="tagline">{{ .Tagline }}</div>
+            </div>
+
             <code>curl -X POST -F 'upload_token=1234567890' -F 'file=@yourfile.png' https://{{ .Host }}/api/file/upload</code>
 
             <setting-group>

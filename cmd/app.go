@@ -100,5 +100,17 @@ func initializeConfig() (c Config) {
 		c.PublicUrl = fmt.Sprintf("http://localhost:%s", c.Port)
 	}
 
+	if c.Branding == "" {
+		c.Branding = "File Host"
+	} else if len(c.Branding) > 20 {
+		log.Fatal().Msgf("Branding text exceeds maximum length of 20 characters (got %d)", len(c.Branding))
+	}
+
+	if c.Tagline == "" {
+		c.Tagline = "Simple file hosting service"
+	} else if len(c.Tagline) > 100 {
+		log.Fatal().Msgf("Tagline text exceeds maximum length of 100 characters (got %d)", len(c.Tagline))
+	}
+
 	return
 }

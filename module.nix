@@ -39,6 +39,18 @@ in
         default = 8872;
       };
 
+      branding = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Branding name for the instance";
+      };
+
+      tagline = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Tagline for the instance, used for meta description and homepage";
+      };
+
       database_type = lib.mkOption {
         type = lib.types.enum [
           "postgresql"

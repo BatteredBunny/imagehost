@@ -37,6 +37,8 @@ type Config struct {
 	BehindReverseProxy bool   `toml:"behind_reverse_proxy"`
 	TrustedProxy       string `toml:"trusted_proxy"`
 	PublicUrl          string `toml:"public_url"` // URL to use for github callback and cookies
+	Branding           string `toml:"branding"`   // Branding text for toolbar (max 20 characters)
+	Tagline 		   string `toml:"tagline"`    // Used for meta description and text on index page (max 100 characters)
 
 	FileStorageMethod fileStorageMethod
 	S3                s3Config `toml:"s3"`

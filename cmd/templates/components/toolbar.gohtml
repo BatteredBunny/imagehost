@@ -1,4 +1,8 @@
 <div id="toolbar">
+    <div class="toolbar-brand">
+        <strong class="brand-text">{{ .Branding }}</strong>
+    </div>
+
     <div class="toolbar-nav">
         <a class="toolbar-option{{ if eq .CurrentPage "home" }} active{{ end }}" href="/" title="home">
             <svg class="lucide-icon" viewBox="0 0 24 24">
@@ -42,6 +46,7 @@
         </a>
         {{ end }}
     </div>
+
     <div class="toolbar-footer">
         <a class="toolbar-option" href="https://github.com/BatteredBunny/imagehost" title="code" target="_blank" rel="noopener noreferrer">
             <svg class="lucide-icon" viewBox="0 0 24 24">

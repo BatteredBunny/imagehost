@@ -5,6 +5,7 @@ database_connection_url = "host=localhost port=5432 user=postgres sslmode=disabl
 port = "8080"
 behind_reverse_proxy = false
 trusted_proxy = ""
+branding = "S3 Example"
 
 [s3]
 access_key_id = "ACCESS_KEY_HERE"

@@ -36,9 +36,6 @@
             .middle-row {
                 display: flex;
                 flex-direction: column;
-                border: 2px solid var(--menu-border-color);
-                border-top: 0px;
-                border-radius: 5px;
 
                 .entry {
                     display: flex;
@@ -51,7 +48,7 @@
 
                     .name {
                         display: flex;
-                        
+
                         border-right: 1px solid var(--menu-border-color);
                         flex: 1;
 

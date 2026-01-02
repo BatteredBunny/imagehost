@@ -14,7 +14,7 @@
 
 <body>
     {{ template "mascot.gohtml" . }}
-    
+
     {{ template "toolbar.gohtml" . }}
 
     <main>
@@ -66,7 +66,7 @@
                                         </svg>
                                         <span>Creation</span>
                                     </div>
-                                    <div class="value">{{ formatTimeDate .CreatedAt }} ({{ relativeTime .CreatedAt }})</div>
+                                    <div class="value" title="{{ formatTimeDate .CreatedAt }}">{{ relativeTime .CreatedAt }}</div>
                                 </div>
                                 <div class="entry">
                                     <div class="name">
@@ -75,7 +75,7 @@
                                         </svg>
                                         <span>Last activity</span>
                                     </div>
-                                    <div class="value">{{ formatTimeDate .LastActivity }} ({{ relativeTime .LastActivity }})
+                                    <div class="value" title="{{ formatTimeDate .LastActivity }}">{{ relativeTime .LastActivity }}
                                     </div>
                                 </div>
                                 <div class="entry">

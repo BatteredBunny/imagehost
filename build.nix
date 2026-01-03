@@ -3,7 +3,7 @@ buildGoModule {
   src = ./.;
 
   name = "hostling";
-  version = "0.2.0";
+  version = "0.2.1";
   vendorHash = "sha256-sNQH/mKPEmeU1OVT7SadIyDGB9p57GpefYVMN804U8Y=";
 
   ldflags = [

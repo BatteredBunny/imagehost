@@ -23,12 +23,13 @@
 
             <setting-group id="server-config-panel">
                 <div class="setting-group-header">
-                    <h2>Server configuration</h2>
+                    <h2>Server info</h2>
                 </div>
 
                 <div class="setting-group-body">
                     <p>Max upload size: <span title="{{ .MaxUploadSize }} bytes">{{ humanizeBytes .MaxUploadSize }}</span>
                     </p>
+                    <p>Hostling version: {{ .Version }}</p>
                 </div>
             </setting-group>
 

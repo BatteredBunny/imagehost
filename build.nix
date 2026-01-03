@@ -2,7 +2,8 @@
 buildGoModule {
   src = ./.;
 
-  name = "imagehost";
+  name = "hostling";
+  version = "0.2.0";
   vendorHash = "sha256-sNQH/mKPEmeU1OVT7SadIyDGB9p57GpefYVMN804U8Y=";
 
   ldflags = [
@@ -11,8 +12,8 @@ buildGoModule {
   ];
 
   meta = {
-    description = "Simple imagehost written in Go";
-    homepage = "https://github.com/BatteredBunny/imagehost";
-    mainProgram = "imagehost";
+    description = "Simple file hosting service";
+    homepage = "https://github.com/BatteredBunny/hostling";
+    mainProgram = "hostling";
   };
 }

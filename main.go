@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/BatteredBunny/imagehost/cmd"
+	"github.com/BatteredBunny/hostling/cmd"
 )
 
 func main() {

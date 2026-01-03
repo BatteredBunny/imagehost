@@ -4,9 +4,9 @@ bin/
 config.toml
 result
 .direnv
-imagehost-data
-imagehost
-imagehost.db
+hostling-data
+hostling
+hostling.db
 .env
 .nixos-test-history
 tmp

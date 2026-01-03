@@ -25,7 +25,7 @@
     in
     {
       overlays.default = final: prev: {
-        imagehost = final.callPackage ./build.nix { };
+        hostling = final.callPackage ./build.nix { };
       };
 
       nixosModules.default = import ./module.nix;
@@ -47,8 +47,8 @@
           overlay = lib.makeScope pkgs.newScope (final: self.overlays.default final pkgs);
         in
         {
-          inherit (overlay) imagehost;
-          default = overlay.imagehost;
+          inherit (overlay) hostling;
+          default = overlay.hostling;
           test-service = pkgs.callPackage ./test.nix { };
         }
       );

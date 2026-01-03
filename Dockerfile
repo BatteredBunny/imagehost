@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -8,14 +8,14 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/imagehost
+RUN go build -o /app/hostling
 
-FROM alpine:3.21
+FROM alpine:3.23
 
 VOLUME [ "/app/data" ]
 EXPOSE 80
 WORKDIR /app
 
-COPY --from=builder /app/imagehost /app/imagehost
+COPY --from=builder /app/hostling /app/hostling
 
-ENTRYPOINT [ "/app/imagehost", "-c", "/app/config.toml" ]
+ENTRYPOINT [ "/app/hostling", "-c", "/app/config.toml" ]

@@ -5,13 +5,13 @@
   ...
 }:
 let
-  cfg = config.services.imagehost;
+  cfg = config.services.hostling;
   toml = pkgs.formats.toml { };
   tomlSetting = toml.generate "config.toml" cfg.settings;
 in
 {
-  options.services.imagehost = {
-    enable = lib.mkEnableOption "imagehost";
+  options.services.hostling = {
+    enable = lib.mkEnableOption "hostling";
 
     package = lib.mkOption {
       description = "package to use";
@@ -75,7 +75,7 @@ in
 
       data_folder = lib.mkOption {
         type = lib.types.path;
-        default = "/var/lib/imagehost/data";
+        default = "/var/lib/hostling/data";
         description = "Folder to store local image data in";
       };
 
@@ -112,11 +112,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    systemd.services.imagehost = {
+    systemd.services.hostling = {
       enable = true;
       serviceConfig = {
-        User = "imagehost";
-        Group = "imagehost";
+        User = "hostling";
+        Group = "hostling";
         ProtectSystem = "full";
         ProtectHome = "yes";
         DeviceAllow = [ "" ];
@@ -135,7 +135,7 @@ in
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
         PrivateUsers = true;
-        StateDirectory = "imagehost";
+        StateDirectory = "hostling";
         EnvironmentFile = cfg.environmentFile;
         ExecStart = "${lib.getExe cfg.package} -c=${tomlSetting}";
         Restart = "always";
@@ -148,27 +148,27 @@ in
       requires = lib.mkIf (cfg.settings.database_type == "postgresql") [ "postgresql.service" ];
     };
 
-    services.imagehost = lib.mkIf (cfg.createDbLocally && cfg.settings.database_type == "postgresql") {
-      settings.database_connection_url = "postgresql:///imagehost?host=/run/postgresql&user=imagehost";
+    services.hostling = lib.mkIf (cfg.createDbLocally && cfg.settings.database_type == "postgresql") {
+      settings.database_connection_url = "postgresql:///hostling?host=/run/postgresql&user=hostling";
     };
 
     services.postgresql = lib.mkIf (cfg.createDbLocally && cfg.settings.database_type == "postgresql") {
       enable = true;
-      ensureDatabases = [ "imagehost" ];
+      ensureDatabases = [ "hostling" ];
       ensureUsers = [
         {
-          name = "imagehost";
+          name = "hostling";
           ensureDBOwnership = true;
         }
       ];
     };
 
-    users.users.imagehost = {
+    users.users.hostling = {
       isSystemUser = true;
-      group = "imagehost";
+      group = "hostling";
     };
 
-    users.groups.imagehost = { };
+    users.groups.hostling = { };
 
     networking.firewall = lib.mkIf cfg.openFirewall {
       allowedTCPPorts = [ (builtins.fromJSON cfg.settings.port) ];

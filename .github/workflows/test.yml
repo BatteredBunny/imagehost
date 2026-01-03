@@ -1,4 +1,4 @@
-name: "Test imagehost"
+name: "Test Hostling"
 on:
   push:
     branches: [ main ]

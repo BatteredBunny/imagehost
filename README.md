@@ -1,10 +1,10 @@
-<h1 align="center">Imagehost</h1>
+<h1 align="center">Hostling</h1>
 
-Simple imagehost written in Golang
+Simple file hosting service
 
-Main page             | Account page             | File modal              | Admin page
-:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![screenshot](https://github.com/user-attachments/assets/c74b9b8d-8a0f-4322-b44a-745d229c4710)  |  ![screenshot](https://github.com/user-attachments/assets/1bb29030-b5e1-4c5e-a8d4-0ae94b252435)  |  ![screenshot](https://github.com/user-attachments/assets/32c43f99-4a21-4fee-ab3d-b675fc6d903e)  |  ![screenshot](https://github.com/user-attachments/assets/34cdfcde-e69d-4846-b2ac-68bfd576a1c1)
+Main page             | Mobile view             | File modal
+:-------------------------:|:-------------------------:|:-------------------------:
+<img width="1416" height="1338" alt="image" src="https://github.com/user-attachments/assets/27f1cefd-87c3-413e-9b58-79ff2cf69ceb" />  |  <img width="489" height="861" alt="image" src="https://github.com/user-attachments/assets/fd12e620-3741-454b-b12b-7f88d50decdc" />  |  <img width="1408" height="1006" alt="image" src="https://github.com/user-attachments/assets/1b51f0dd-b245-4c0c-8ce5-8e6e13b54132" />
 
 # Features
 - Easy social login via github
@@ -30,15 +30,15 @@ TODO
 
 ```nix
 inputs = {
-    imagehost.url = "github:BatteredBunny/imagehost";
+    hostling.url = "github:BatteredBunny/hostling";
 };
 ```
 
 ```nix
-imports = [ inputs.imagehost.nixosModules.default ];
+imports = [ inputs.hostling.nixosModules.default ];
 
 services = {
-    imagehost = {
+    hostling = {
         enable = true;
         createDbLocally = true;
         openFirewall = false;

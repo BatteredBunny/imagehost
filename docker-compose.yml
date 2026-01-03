@@ -1,6 +1,6 @@
 services:
-  imagehost:
-    container_name: imagehost
+  hostling:
+    container_name: hostling
     build: ./
     environment:
       - PUID=1000
@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./imagehost-data:/app/data
+      - ./hostling-data:/app/data
       - ./examples/example_docker.toml:/app/config.toml
     depends_on:
       db:
@@ -18,14 +18,14 @@ services:
     restart: unless-stopped
 
   db:
-    container_name: postgres_imagehost
+    container_name: postgres_hostling
     image: postgres
     ports:
       - "5433:5432"
     environment:
       - POSTGRES_PASSWORD=123
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=imagehost
+      - POSTGRES_DB=hostling
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

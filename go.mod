@@ -1,4 +1,4 @@
-module github.com/BatteredBunny/imagehost
+module github.com/BatteredBunny/hostling
 
 go 1.25.5
 

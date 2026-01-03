@@ -1,7 +1,7 @@
 data_folder = "./data/"
 max_upload_size = 104857600
 database_type = "sqlite"
-database_connection_url = "imagehost.db"
+database_connection_url = "hostling.db"
 port = "8081"
 behind_reverse_proxy = false
 trusted_proxy = ""

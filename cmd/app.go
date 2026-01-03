@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/BatteredBunny/imagehost/cmd/tags"
+	"github.com/BatteredBunny/hostling/cmd/tags"
 	"github.com/BurntSushi/toml"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -101,7 +101,7 @@ func initializeConfig() (c Config) {
 	}
 
 	if c.Branding == "" {
-		c.Branding = "File Host"
+		c.Branding = "Hostling"
 	} else if len(c.Branding) > 20 {
 		log.Fatal().Msgf("Branding text exceeds maximum length of 20 characters (got %d)", len(c.Branding))
 	}

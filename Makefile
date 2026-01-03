@@ -3,10 +3,10 @@ build:
 
 clean:
 	go clean
-	rm -rf ./data ./imagehost-data ./imagehost.db
+	rm -rf ./data ./hostling-data ./hostling.db
 
 docker:
-	docker build -t ayay2021/imagehost .
+	docker build -t batteredbunny/hostling .
 
 docker-push:
-	docker push ayay2021/imagehost:latest
+	docker push batteredbunny/hostling:latest

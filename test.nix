@@ -3,10 +3,10 @@ let
   port = 8080;
 in
 testers.nixosTest {
-  name = "imagehost";
+  name = "hostling";
 
   interactive.nodes.machine = {
-    services.imagehost.openFirewall = true;
+    services.hostling.openFirewall = true;
 
     virtualisation.forwardPorts = [
       {
@@ -21,7 +21,7 @@ testers.nixosTest {
     { ... }:
     {
       imports = [ ./module.nix ];
-      services.imagehost = {
+      services.hostling = {
         enable = true;
         createDbLocally = true;
         settings.database_type = "postgresql";
@@ -34,12 +34,12 @@ testers.nixosTest {
   testScript =
     { nodes, ... }:
     let
-      port = toString nodes.machine.services.imagehost.settings.port;
+      port = toString nodes.machine.services.hostling.settings.port;
     in
     ''
       start_all()
       machine.wait_for_unit("postgresql.service")
-      machine.wait_for_unit("imagehost.service")
+      machine.wait_for_unit("hostling.service")
       machine.wait_for_open_port(${port})
       machine.succeed("curl -f http://localhost:${port}/")
     '';

@@ -5,7 +5,7 @@
     {{ template "header.gohtml" . }}
     <link rel="stylesheet" href="/public/styles/common.css">
     <link rel="stylesheet" href="/public/styles/upload.css">
-    <title>{{ .Branding }}</title>
+    {{ template "meta-title.gohtml" .Branding }}
 </head>
 
 <body>
